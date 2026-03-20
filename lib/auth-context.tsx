@@ -2,6 +2,8 @@
 
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react'
 
+const DEMO_PASSWORD = 'crestmind2026'
+
 interface User {
   username: string
 }
@@ -20,7 +22,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
-    // Check for existing session
     const storedUser = localStorage.getItem('crestmind_user')
     if (storedUser) {
       setUser(JSON.parse(storedUser))
@@ -29,8 +30,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [])
 
   const login = async (username: string, password: string): Promise<boolean> => {
-    // Simulate login - in production this would call an auth API
-    if (username && password) {
+    if (username && password === DEMO_PASSWORD) {
       const userData = { username }
       setUser(userData)
       localStorage.setItem('crestmind_user', JSON.stringify(userData))
