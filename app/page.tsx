@@ -3,12 +3,13 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
-import { Eye, EyeOff, Lock, User } from 'lucide-react'
+import { Eye, EyeOff, Lock, User, Sparkles } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useAuth } from '@/lib/auth-context'
 import { AuthProvider } from '@/lib/auth-context'
 import { Spinner } from '@/components/ui/spinner'
 import { toast } from 'sonner'
+import { enterDemoMode } from '@/lib/api'
 
 // Particle system for login background
 function ParticleField() {
@@ -163,6 +164,13 @@ function LoginForm() {
       setIsLoading(false)
     }
   }, [username, password, login, router])
+
+  // ── DEMO MODE HANDLER ──
+  const handleDemoMode = useCallback(() => {
+    enterDemoMode()
+    toast.success('Entering demo mode — no account needed')
+    router.push('/dashboard')
+  }, [router])
 
   if (authLoading) {
     return (
@@ -331,19 +339,45 @@ function LoginForm() {
                 </motion.button>
               </form>
 
-              {/* SSO Button */}
-              <motion.div 
-                className="mt-6"
+              {/* SSO + Demo Buttons */}
+              <motion.div
+                className="mt-6 space-y-3"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ delay: 0.6 }}
               >
+                {/* SSO */}
                 <button
                   disabled
                   className="w-full bg-muted/30 text-muted-foreground/50 font-medium py-3 rounded-lg border border-border/50 cursor-not-allowed text-sm tracking-wide"
                 >
                   Single Sign-On (Coming Soon)
                 </button>
+
+                {/* Divider */}
+                <div className="flex items-center gap-3">
+                  <div className="flex-1 h-px bg-primary/10" />
+                  <span className="text-[9px] text-primary/30 uppercase tracking-[0.2em] font-semibold">
+                    or
+                  </span>
+                  <div className="flex-1 h-px bg-primary/10" />
+                </div>
+
+                {/* Demo Mode Button */}
+                <motion.button
+                  onClick={handleDemoMode}
+                  className="relative w-full overflow-hidden bg-transparent text-primary font-semibold py-3 rounded-lg border border-primary/40 hover:border-primary/70 hover:bg-primary/5 text-sm tracking-wide transition-all flex items-center justify-center gap-2 group"
+                  whileHover={{ scale: 1.01 }}
+                  whileTap={{ scale: 0.98 }}
+                >
+                  {/* shimmer sweep on hover */}
+                  <span className="absolute inset-0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700 bg-gradient-to-r from-transparent via-primary/10 to-transparent" />
+                  <Sparkles className="w-4 h-4 text-primary/70" />
+                  <span>Explore Live Demo</span>
+                  <span className="text-[9px] text-primary/50 uppercase tracking-widest font-bold ml-1">
+                    — No Account Needed
+                  </span>
+                </motion.button>
               </motion.div>
 
               {/* Secure Access Note */}

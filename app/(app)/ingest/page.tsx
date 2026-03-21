@@ -1,9 +1,9 @@
 'use client'
 
 import { useState, useCallback, useRef, useEffect } from 'react'
-import { Upload, CloudUpload, FileText, Check, Trash2, AlertCircle, X, Database, Search, FileStack, Sparkles, Cpu } from 'lucide-react'
+import { Upload, CloudUpload, FileText, Check, Trash2, AlertCircle, X, Database, Search, FileStack, Sparkles, Cpu, Lock } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { ingestDocument, getDocuments, deleteDocument, Document } from '@/lib/api'
+import { ingestDocument, getDocuments, deleteDocument, Document, isDemoMode } from '@/lib/api'
 import { Spinner } from '@/components/ui/spinner'
 import { toast } from 'sonner'
 import useSWR, { mutate } from 'swr'
@@ -151,19 +151,22 @@ function ConfettiBurst() {
           key={p.id}
           className="absolute left-1/2 top-1/2 w-2 h-2 rounded-full bg-primary"
           initial={{ x: 0, y: 0, opacity: 1, scale: 0 }}
-          animate={{ 
-            x: p.x, 
-            y: p.y, 
-            opacity: 0, 
-            scale: p.scale,
-            rotate: p.rotation 
-          }}
+          animate={{ x: p.x, y: p.y, opacity: 0, scale: p.scale, rotate: p.rotation }}
           transition={{ duration: 0.8, ease: 'easeOut' }}
         />
       ))}
     </div>
   )
 }
+
+// ── DEMO MODE: static knowledge base ──
+const DEMO_DOCUMENTS: Document[] = [
+  { doc_name: 'Ollies - Lease, 2010.docx',         doc_type: 'lease',      chunks: 28, created_at: '2025-03-10T14:22:00Z' },
+  { doc_name: 'Ollies - Amend 1, 2015.docx',       doc_type: 'amendment',  chunks: 18, created_at: '2025-03-10T14:35:00Z' },
+  { doc_name: 'Ollies - Amendment, 2010.docx',      doc_type: 'amendment',  chunks: 14, created_at: '2025-03-10T14:48:00Z' },
+  { doc_name: 'TMT SM Work Order Quote418.pdf',     doc_type: 'work_order', chunks: 22, created_at: '2025-03-11T09:15:00Z' },
+  { doc_name: '1-Woodcrest Short Term LEASE.docx',  doc_type: 'lease',      chunks: 31, created_at: '2025-03-11T09:30:00Z' },
+]
 
 export default function IngestPage() {
   const [file, setFile] = useState<File | null>(null)
@@ -178,14 +181,31 @@ export default function IngestPage() {
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [isDragOver, setIsDragOver] = useState(false)
 
-  const { data: documentsData, isLoading: isLoadingDocs } = useSWR('documents', getDocuments, {
-    refreshInterval: 10000,
-  })
+  const demo = isDemoMode()
 
-  const documents = documentsData?.documents || []
+  const { data: documentsData, isLoading: isLoadingDocs } = useSWR(
+    demo ? null : 'documents',
+    getDocuments,
+    { refreshInterval: 10000 }
+  )
+
+  const documents = demo ? DEMO_DOCUMENTS : (documentsData?.documents || [])
   const filteredDocuments = documents.filter((doc) =>
     doc.doc_name.toLowerCase().includes(searchQuery.toLowerCase())
   )
+
+  // Dynamic timestamp
+  const formatTimeAgo = (dateString: string) => {
+    const normalized = dateString.endsWith('Z') ? dateString : dateString + 'Z'
+    const diffMs    = Date.now() - new Date(normalized).getTime()
+    const diffMins  = Math.floor(diffMs / 60000)
+    const diffHours = Math.floor(diffMs / 3600000)
+    const diffDays  = Math.floor(diffMs / 86400000)
+    if (diffDays > 0)  return `${diffDays}d ago`
+    if (diffHours > 0) return `${diffHours}h ago`
+    if (diffMins > 0)  return `${diffMins}m ago`
+    return 'Just now'
+  }
 
   // Check if on mobile
   const [isMobile, setIsMobile] = useState(false)
@@ -198,8 +218,8 @@ export default function IngestPage() {
 
   const handleDragOver = useCallback((e: React.DragEvent) => {
     e.preventDefault()
-    setIsDragOver(true)
-  }, [])
+    if (!demo) setIsDragOver(true)
+  }, [demo])
 
   const handleDragLeave = useCallback((e: React.DragEvent) => {
     e.preventDefault()
@@ -209,21 +229,18 @@ export default function IngestPage() {
   const handleDrop = useCallback((e: React.DragEvent) => {
     e.preventDefault()
     setIsDragOver(false)
+    if (demo) return
     const droppedFile = e.dataTransfer.files[0]
-    if (droppedFile) {
-      setFile(droppedFile)
-    }
-  }, [])
+    if (droppedFile) setFile(droppedFile)
+  }, [demo])
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (demo) return
     const selectedFile = e.target.files?.[0]
-    if (selectedFile) {
-      setFile(selectedFile)
-    }
+    if (selectedFile) setFile(selectedFile)
   }
 
   const handleIngest = async () => {
-    // Handle validation with toasts instead of disabling button
     if (!file) {
       toast.error('Please select a file first')
       return
@@ -236,7 +253,6 @@ export default function IngestPage() {
     setIsIngesting(true)
     setLastIngestResult(null)
 
-    // Simulate progress steps
     const steps: IngestStep[] = ['reading', 'chunking', 'embedding']
     for (const step of steps) {
       setCurrentStep(step)
@@ -249,16 +265,10 @@ export default function IngestPage() {
       setShowConfetti(true)
       setTimeout(() => setShowConfetti(false), 1000)
       toast.success(`Successfully ingested ${result.doc_name}`)
-      
-      // Reset form
       setFile(null)
       setPropertyName('')
       setDocType('auto-detect')
-      if (fileInputRef.current) {
-        fileInputRef.current.value = ''
-      }
-      
-      // Refresh documents list
+      if (fileInputRef.current) fileInputRef.current.value = ''
       mutate('documents')
     } catch (error) {
       console.error('Ingest error:', error)
@@ -270,6 +280,10 @@ export default function IngestPage() {
   }
 
   const handleDelete = async (docName: string) => {
+    if (demo) {
+      toast.error('Deletion is disabled in demo mode')
+      return
+    }
     setDeletingDoc(docName)
     try {
       await deleteDocument(docName)
@@ -291,6 +305,7 @@ export default function IngestPage() {
       transition={{ duration: 0.4 }}
     >
       <div className="max-w-6xl mx-auto space-y-10">
+
         {/* Header */}
         <motion.header 
           className="space-y-2"
@@ -304,178 +319,198 @@ export default function IngestPage() {
           </p>
         </motion.header>
 
-        {/* Upload Section */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          {/* Dropzone */}
+        {/* ── DEMO BANNER ── */}
+        {demo && (
           <motion.div
-            onDragOver={handleDragOver}
-            onDragLeave={handleDragLeave}
-            onDrop={handleDrop}
-            onClick={() => fileInputRef.current?.click()}
-            className={cn(
-              'flex flex-col items-center justify-center gap-6 rounded-xl border-2 border-dashed px-6 py-16 lg:py-20 cursor-pointer transition-all duration-300',
-              isDragOver ? 'border-primary bg-primary/10 marching-ants' :
-              file ? 'border-success/50 bg-success/5' :
-              'border-primary/30 glass-card hover:border-primary/50 hover:bg-primary/5'
-            )}
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 0.1 }}
-            whileHover={{ scale: 1.01 }}
+            initial={{ opacity: 0, y: -8 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="flex items-center gap-4 bg-primary/5 border border-primary/20 rounded-xl px-6 py-4"
           >
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept=".pdf,.docx,.txt,.doc"
-              onChange={handleFileSelect}
-              className="hidden"
-            />
-            <AnimatePresence mode="wait">
-              {file ? (
-                <motion.div 
-                  className="flex flex-col items-center gap-4"
-                  key="file-selected"
-                  initial={{ opacity: 0, scale: 0.9 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0, scale: 0.9 }}
-                >
-                  <motion.div 
-                    className="w-20 h-20 rounded-full bg-success/10 border border-success/20 flex items-center justify-center"
-                    initial={{ y: -20 }}
-                    animate={{ y: 0 }}
-                    transition={{ type: 'spring', stiffness: 300, damping: 20 }}
-                  >
-                    <FileText className="w-10 h-10 text-success" />
-                  </motion.div>
-                  <div className="text-center">
-                    <p className="font-semibold text-foreground">{file.name}</p>
-                    <p className="text-sm text-muted-foreground/60">
-                      {(file.size / 1024 / 1024).toFixed(2)} MB
-                    </p>
-                  </div>
-                  <motion.button
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      setFile(null)
-                      if (fileInputRef.current) fileInputRef.current.value = ''
-                    }}
-                    className="flex items-center gap-2 text-sm text-destructive/70 hover:text-destructive transition-colors"
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                  >
-                    <X className="w-4 h-4" />
-                    Remove file
-                  </motion.button>
-                </motion.div>
-              ) : (
-                <motion.div
-                  className="flex flex-col items-center gap-4"
-                  key="no-file"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                >
-                  <motion.div
-                    animate={isDragOver ? { scale: 1.1, y: -5 } : { scale: 1, y: 0 }}
-                    transition={{ duration: 0.2 }}
-                  >
-                    <CloudUpload className="w-16 h-16 text-primary/60" />
-                  </motion.div>
-                  <div className="text-center">
-                    <p className="text-xl font-serif text-foreground/80">Drop files here</p>
-                    <p className="text-sm text-muted-foreground/50 mt-1">
-                      Supports PDF, DOCX, and TXT (Max 50MB)
-                    </p>
-                  </div>
-                  <motion.button 
-                    className="bg-primary/10 hover:bg-primary/20 text-primary font-semibold px-8 py-3 rounded-lg transition-colors text-sm uppercase tracking-[0.1em] border border-primary/20"
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                  >
-                    Browse Files
-                  </motion.button>
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </motion.div>
-
-          {/* Metadata Form */}
-          <motion.div 
-            className="glass-card rounded-xl p-6 space-y-6"
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 0.2 }}
-          >
-            <div className="space-y-5">
-              <div className="space-y-2">
-                <label className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground/60 flex items-center gap-1">
-                  Property Name <span className="text-destructive">*</span>
-                </label>
-                <input
-                  type="text"
-                  value={propertyName}
-                  onChange={(e) => setPropertyName(e.target.value)}
-                  placeholder="e.g. Westfield Shopping Center"
-                  className="w-full glass-card rounded-lg h-14 px-4 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary/40 transition-all placeholder:text-muted-foreground/30 caret-primary"
-                  disabled={isIngesting}
-                />
-              </div>
-
-              <div className="space-y-2">
-                <label className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground/60">
-                  Document Type
-                </label>
-                <select
-                  value={docType}
-                  onChange={(e) => setDocType(e.target.value)}
-                  className="w-full glass-card rounded-lg h-14 px-4 focus:outline-none focus:ring-2 focus:ring-primary/30 transition-all appearance-none cursor-pointer"
-                  disabled={isIngesting}
-                >
-                  {docTypes.map((type) => (
-                    <option key={type.value} value={type.value} className="bg-card">
-                      {type.label}
-                    </option>
-                  ))}
-                </select>
-              </div>
+            <Lock className="w-5 h-5 text-primary/60 shrink-0" />
+            <div>
+              <p className="text-sm font-semibold text-primary">
+                ✦ Demo Mode — Document ingestion is disabled
+              </p>
+              <p className="text-xs text-muted-foreground/70 mt-0.5">
+                5 real Woodcrest Capital documents are pre-loaded below. Sign in with credentials to ingest your own documents.
+              </p>
             </div>
-
-            {/* Progress */}
-            <AnimatePresence>
-              {currentStep && (
-                <motion.div
-                  initial={{ opacity: 0, height: 0 }}
-                  animate={{ opacity: 1, height: 'auto' }}
-                  exit={{ opacity: 0, height: 0 }}
-                >
-                  <PipelineVisualization currentStep={currentStep} />
-                </motion.div>
-              )}
-            </AnimatePresence>
-
-            {/* Ingest Button - Always enabled, validation happens on click */}
-            <motion.button
-              onClick={handleIngest}
-              disabled={isIngesting}
-              className="w-full bg-gradient-to-r from-primary to-primary-electric hover:from-primary-electric hover:to-primary text-primary-foreground font-bold py-4 rounded-lg shadow-lg shadow-primary/20 transition-all disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-3 text-sm uppercase tracking-[0.1em] button-press button-shimmer relative overflow-hidden"
-              whileHover={!isIngesting ? { scale: 1.02 } : {}}
-              whileTap={!isIngesting ? { scale: 0.98 } : {}}
-            >
-              {showConfetti && <ConfettiBurst />}
-              {isIngesting ? (
-                <>
-                  <Spinner className="w-5 h-5" />
-                  <span>Processing</span>
-                </>
-              ) : (
-                <>
-                  <Upload className="w-5 h-5" />
-                  <span>Ingest Document</span>
-                </>
-              )}
-            </motion.button>
           </motion.div>
-        </div>
+        )}
+
+        {/* Upload Section — hidden in demo */}
+        {!demo && (
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            {/* Dropzone */}
+            <motion.div
+              onDragOver={handleDragOver}
+              onDragLeave={handleDragLeave}
+              onDrop={handleDrop}
+              onClick={() => fileInputRef.current?.click()}
+              className={cn(
+                'flex flex-col items-center justify-center gap-6 rounded-xl border-2 border-dashed px-6 py-16 lg:py-20 cursor-pointer transition-all duration-300',
+                isDragOver ? 'border-primary bg-primary/10 marching-ants' :
+                file ? 'border-success/50 bg-success/5' :
+                'border-primary/30 glass-card hover:border-primary/50 hover:bg-primary/5'
+              )}
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.1 }}
+              whileHover={{ scale: 1.01 }}
+            >
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept=".pdf,.docx,.txt,.doc"
+                onChange={handleFileSelect}
+                className="hidden"
+              />
+              <AnimatePresence mode="wait">
+                {file ? (
+                  <motion.div 
+                    className="flex flex-col items-center gap-4"
+                    key="file-selected"
+                    initial={{ opacity: 0, scale: 0.9 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.9 }}
+                  >
+                    <motion.div 
+                      className="w-20 h-20 rounded-full bg-success/10 border border-success/20 flex items-center justify-center"
+                      initial={{ y: -20 }}
+                      animate={{ y: 0 }}
+                      transition={{ type: 'spring', stiffness: 300, damping: 20 }}
+                    >
+                      <FileText className="w-10 h-10 text-success" />
+                    </motion.div>
+                    <div className="text-center">
+                      <p className="font-semibold text-foreground">{file.name}</p>
+                      <p className="text-sm text-muted-foreground/60">
+                        {(file.size / 1024 / 1024).toFixed(2)} MB
+                      </p>
+                    </div>
+                    <motion.button
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        setFile(null)
+                        if (fileInputRef.current) fileInputRef.current.value = ''
+                      }}
+                      className="flex items-center gap-2 text-sm text-destructive/70 hover:text-destructive transition-colors"
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                    >
+                      <X className="w-4 h-4" />
+                      Remove file
+                    </motion.button>
+                  </motion.div>
+                ) : (
+                  <motion.div
+                    className="flex flex-col items-center gap-4"
+                    key="no-file"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                  >
+                    <motion.div
+                      animate={isDragOver ? { scale: 1.1, y: -5 } : { scale: 1, y: 0 }}
+                      transition={{ duration: 0.2 }}
+                    >
+                      <CloudUpload className="w-16 h-16 text-primary/60" />
+                    </motion.div>
+                    <div className="text-center">
+                      <p className="text-xl font-serif text-foreground/80">Drop files here</p>
+                      <p className="text-sm text-muted-foreground/50 mt-1">
+                        Supports PDF, DOCX, and TXT (Max 50MB)
+                      </p>
+                    </div>
+                    <motion.button 
+                      className="bg-primary/10 hover:bg-primary/20 text-primary font-semibold px-8 py-3 rounded-lg transition-colors text-sm uppercase tracking-[0.1em] border border-primary/20"
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                    >
+                      Browse Files
+                    </motion.button>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </motion.div>
+
+            {/* Metadata Form */}
+            <motion.div 
+              className="glass-card rounded-xl p-6 space-y-6"
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.2 }}
+            >
+              <div className="space-y-5">
+                <div className="space-y-2">
+                  <label className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground/60 flex items-center gap-1">
+                    Property Name <span className="text-destructive">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={propertyName}
+                    onChange={(e) => setPropertyName(e.target.value)}
+                    placeholder="e.g. Westfield Shopping Center"
+                    className="w-full glass-card rounded-lg h-14 px-4 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary/40 transition-all placeholder:text-muted-foreground/30 caret-primary"
+                    disabled={isIngesting}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground/60">
+                    Document Type
+                  </label>
+                  <select
+                    value={docType}
+                    onChange={(e) => setDocType(e.target.value)}
+                    className="w-full glass-card rounded-lg h-14 px-4 focus:outline-none focus:ring-2 focus:ring-primary/30 transition-all appearance-none cursor-pointer"
+                    disabled={isIngesting}
+                  >
+                    {docTypes.map((type) => (
+                      <option key={type.value} value={type.value} className="bg-card">
+                        {type.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              <AnimatePresence>
+                {currentStep && (
+                  <motion.div
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: 'auto' }}
+                    exit={{ opacity: 0, height: 0 }}
+                  >
+                    <PipelineVisualization currentStep={currentStep} />
+                  </motion.div>
+                )}
+              </AnimatePresence>
+
+              {/* Ingest Button - always enabled */}
+              <motion.button
+                onClick={handleIngest}
+                disabled={isIngesting}
+                className="w-full bg-gradient-to-r from-primary to-primary-electric hover:from-primary-electric hover:to-primary text-primary-foreground font-bold py-4 rounded-lg shadow-lg shadow-primary/20 transition-all disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-3 text-sm uppercase tracking-[0.1em] button-press button-shimmer relative overflow-hidden"
+                whileHover={!isIngesting ? { scale: 1.02 } : {}}
+                whileTap={!isIngesting ? { scale: 0.98 } : {}}
+              >
+                {showConfetti && <ConfettiBurst />}
+                {isIngesting ? (
+                  <>
+                    <Spinner className="w-5 h-5" />
+                    <span>Processing</span>
+                  </>
+                ) : (
+                  <>
+                    <Upload className="w-5 h-5" />
+                    <span>Ingest Document</span>
+                  </>
+                )}
+              </motion.button>
+            </motion.div>
+          </div>
+        )}
 
         {/* Success Card */}
         <AnimatePresence>
@@ -516,7 +551,14 @@ export default function IngestPage() {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <Database className="w-5 h-5 text-primary" />
-              <h2 className="text-sm font-bold uppercase tracking-[0.15em] text-muted-foreground">Knowledge Base</h2>
+              <h2 className="text-sm font-bold uppercase tracking-[0.15em] text-muted-foreground">
+                Knowledge Base
+              </h2>
+              {demo && (
+                <span className="text-[9px] font-bold uppercase tracking-widest text-primary/50 border border-primary/20 px-2 py-0.5 rounded">
+                  Demo Data
+                </span>
+              )}
             </div>
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground/40" />
@@ -531,7 +573,7 @@ export default function IngestPage() {
           </div>
 
           <div className="glass-card rounded-xl overflow-hidden">
-            {isLoadingDocs ? (
+            {isLoadingDocs && !demo ? (
               <div className="flex items-center justify-center py-16">
                 <Spinner className="w-6 h-6 text-primary" />
               </div>
@@ -547,21 +589,11 @@ export default function IngestPage() {
                 <table className="w-full text-left border-collapse">
                   <thead>
                     <tr className="bg-primary/5">
-                      <th className="px-6 py-4 text-[10px] font-bold uppercase tracking-[0.15em] text-muted-foreground/60">
-                        Document Name
-                      </th>
-                      <th className="px-6 py-4 text-[10px] font-bold uppercase tracking-[0.15em] text-muted-foreground/60">
-                        Type
-                      </th>
-                      <th className="px-6 py-4 text-[10px] font-bold uppercase tracking-[0.15em] text-muted-foreground/60">
-                        Chunks
-                      </th>
-                      <th className="px-6 py-4 text-[10px] font-bold uppercase tracking-[0.15em] text-muted-foreground/60">
-                        Created
-                      </th>
-                      <th className="px-6 py-4 text-[10px] font-bold uppercase tracking-[0.15em] text-muted-foreground/60 text-right">
-                        Actions
-                      </th>
+                      <th className="px-6 py-4 text-[10px] font-bold uppercase tracking-[0.15em] text-muted-foreground/60">Document Name</th>
+                      <th className="px-6 py-4 text-[10px] font-bold uppercase tracking-[0.15em] text-muted-foreground/60">Type</th>
+                      <th className="px-6 py-4 text-[10px] font-bold uppercase tracking-[0.15em] text-muted-foreground/60">Chunks</th>
+                      <th className="px-6 py-4 text-[10px] font-bold uppercase tracking-[0.15em] text-muted-foreground/60">Ingested</th>
+                      <th className="px-6 py-4 text-[10px] font-bold uppercase tracking-[0.15em] text-muted-foreground/60 text-right">Actions</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-border/30">
@@ -588,12 +620,18 @@ export default function IngestPage() {
                           </span>
                         </td>
                         <td className="px-6 py-4 text-muted-foreground/70 font-mono text-sm">{doc.chunks}</td>
-                        <td className="px-6 py-4 text-muted-foreground/70 text-sm">{doc.created_at}</td>
+                        <td className="px-6 py-4 text-muted-foreground/70 text-sm">
+                          {formatTimeAgo(doc.created_at)}
+                        </td>
                         <td className="px-6 py-4 text-right">
                           <motion.button
                             onClick={() => handleDelete(doc.doc_name)}
-                            disabled={deletingDoc === doc.doc_name}
-                            className="opacity-0 group-hover:opacity-100 text-muted-foreground/50 hover:text-destructive transition-all disabled:opacity-50"
+                            disabled={deletingDoc === doc.doc_name || demo}
+                            className={cn(
+                              'text-muted-foreground/50 hover:text-destructive transition-all disabled:opacity-30 disabled:cursor-not-allowed',
+                              !demo && 'opacity-0 group-hover:opacity-100'
+                            )}
+                            title={demo ? 'Deletion disabled in demo mode' : 'Delete document'}
                             whileHover={{ scale: 1.1 }}
                             whileTap={{ scale: 0.9 }}
                           >
@@ -614,9 +652,9 @@ export default function IngestPage() {
         </motion.section>
       </div>
 
-      {/* Mobile Sticky Bar */}
+      {/* Mobile Sticky Bar — real users only */}
       <AnimatePresence>
-        {file && isMobile && (
+        {!demo && file && isMobile && (
           <motion.div 
             className="fixed bottom-0 left-0 right-0 p-4 glass-card border-t border-border/50 lg:hidden z-50"
             initial={{ y: 100, opacity: 0 }}
@@ -636,11 +674,7 @@ export default function IngestPage() {
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
               >
-                {isIngesting ? (
-                  <Spinner className="w-4 h-4" />
-                ) : (
-                  <Upload className="w-4 h-4" />
-                )}
+                {isIngesting ? <Spinner className="w-4 h-4" /> : <Upload className="w-4 h-4" />}
                 <span>Ingest</span>
               </motion.button>
             </div>

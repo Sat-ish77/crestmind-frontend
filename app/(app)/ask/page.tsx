@@ -1,9 +1,9 @@
 'use client'
 
 import { useState, useMemo, useEffect, useCallback } from 'react'
-import { Search, DollarSign, CalendarDays, ShieldCheck, ParkingCircle, Droplet, PawPrint, ChevronDown, ChevronUp, CheckCircle, AlertCircle, AlertTriangle, FileText, Loader2 } from 'lucide-react'
+import { Search, DollarSign, CalendarDays, ShieldCheck, ParkingCircle, Droplet, PawPrint, ChevronDown, FileText, Loader2, CheckCircle, AlertCircle, AlertTriangle, RefreshCw, Lock } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { askQuestion, AskResponse, Source, getDocuments } from '@/lib/api'
+import { askQuestion, AskResponse, Source, getDocuments, isDemoMode } from '@/lib/api'
 import { Spinner } from '@/components/ui/spinner'
 import { toast } from 'sonner'
 import useSWR from 'swr'
@@ -18,48 +18,43 @@ const placeholderQuestions = [
   'What is the pet policy?',
 ]
 
+// Real user quick questions
 const quickQuestions = [
-  { icon: DollarSign, label: 'What is the monthly rent?' },
-  { icon: PawPrint, label: 'What is the pet policy?' },
-  { icon: CalendarDays, label: 'When does the lease expire?' },
-  { icon: ShieldCheck, label: 'What is the security deposit?' },
+  { icon: DollarSign,    label: 'What is the monthly rent?' },
+  { icon: PawPrint,      label: 'What is the pet policy?' },
+  { icon: CalendarDays,  label: 'When does the lease expire?' },
+  { icon: ShieldCheck,   label: 'What is the security deposit?' },
   { icon: ParkingCircle, label: 'Are there parking fees?' },
-  { icon: Droplet, label: 'Who pays for utilities?' },
+  { icon: Droplet,       label: 'Who pays for utilities?' },
+]
+
+// Demo mode quick questions — real Woodcrest data
+const demoQuestions = [
+  { icon: RefreshCw,    label: 'How many renewal options does the tenant have?' },
+  { icon: DollarSign,   label: 'What was the total HVAC ductwork invoice?' },
+  { icon: CalendarDays, label: 'When does the 2015 lease amendment take effect?' },
+  { icon: ShieldCheck,  label: 'What is the base rent for the short term lease?' },
 ]
 
 const docTypes = [
-  { value: '', label: 'All Document Types' },
-  { value: 'lease', label: 'Lease' },
-  { value: 'amendment', label: 'Amendment' },
-  { value: 'invoice', label: 'Invoice' },
+  { value: '',           label: 'All Document Types' },
+  { value: 'lease',      label: 'Lease' },
+  { value: 'amendment',  label: 'Amendment' },
+  { value: 'invoice',    label: 'Invoice' },
   { value: 'inspection', label: 'Inspection' },
-  { value: 'quote', label: 'Quote' },
+  { value: 'quote',      label: 'Quote' },
   { value: 'work_order', label: 'Work Order' },
 ]
 
 function ConfidenceBadge({ confidence }: { confidence: 'high' | 'medium' | 'low' }) {
   const config = {
-    high: {
-      icon: CheckCircle,
-      label: 'High Confidence',
-      className: 'bg-success/10 border-success/30 text-success confidence-high',
-    },
-    medium: {
-      icon: AlertCircle,
-      label: 'Medium Confidence',
-      className: 'bg-warning/10 border-warning/30 text-warning confidence-medium',
-    },
-    low: {
-      icon: AlertTriangle,
-      label: 'Low Confidence',
-      className: 'bg-destructive/10 border-destructive/30 text-destructive confidence-low',
-    },
+    high:   { icon: CheckCircle,   label: 'High Confidence',   className: 'bg-success/10 border-success/30 text-success confidence-high' },
+    medium: { icon: AlertCircle,   label: 'Medium Confidence', className: 'bg-warning/10 border-warning/30 text-warning confidence-medium' },
+    low:    { icon: AlertTriangle, label: 'Low Confidence',    className: 'bg-destructive/10 border-destructive/30 text-destructive confidence-low' },
   }
-
   const { icon: Icon, label, className } = config[confidence]
-
   return (
-    <motion.div 
+    <motion.div
       className={cn('inline-flex items-center gap-2 px-4 py-2 rounded-full border', className)}
       initial={{ opacity: 0, scale: 0.9 }}
       animate={{ opacity: 1, scale: 1 }}
@@ -73,15 +68,13 @@ function ConfidenceBadge({ confidence }: { confidence: 'high' | 'medium' | 'low'
 
 function SourceCard({ source, index }: { source: Source; index: number }) {
   const [isExpanded, setIsExpanded] = useState(index === 0)
-
   const confidenceConfig = {
-    high: 'text-success',
+    high:   'text-success',
     medium: 'text-warning',
-    low: 'text-destructive',
+    low:    'text-destructive',
   }
-
   return (
-    <motion.div 
+    <motion.div
       className="border border-border/50 rounded-xl overflow-hidden glass-card"
       initial={{ opacity: 0, x: 30 }}
       animate={{ opacity: 1, x: 0 }}
@@ -104,17 +97,14 @@ function SourceCard({ source, index }: { source: Source; index: number }) {
           <span className={cn('text-[10px] font-bold uppercase tracking-wider', confidenceConfig[source.confidence])}>
             {source.confidence}
           </span>
-          <motion.div
-            animate={{ rotate: isExpanded ? 180 : 0 }}
-            transition={{ duration: 0.2 }}
-          >
+          <motion.div animate={{ rotate: isExpanded ? 180 : 0 }} transition={{ duration: 0.2 }}>
             <ChevronDown className="w-4 h-4 text-muted-foreground" />
           </motion.div>
         </div>
       </button>
       <AnimatePresence>
         {isExpanded && (
-          <motion.div 
+          <motion.div
             initial={{ height: 0, opacity: 0 }}
             animate={{ height: 'auto', opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
@@ -135,10 +125,8 @@ function SourceCard({ source, index }: { source: Source; index: number }) {
   )
 }
 
-// Word by word reveal component
 function AnimatedAnswer({ text }: { text: string }) {
   const words = text.split(' ')
-  
   return (
     <motion.p className="text-lg leading-relaxed text-foreground">
       {words.map((word, index) => (
@@ -165,21 +153,20 @@ export default function AskPage() {
   const [placeholderIndex, setPlaceholderIndex] = useState(0)
   const [isFocused, setIsFocused] = useState(false)
 
-  const { data: documentsData } = useSWR('documents', getDocuments)
-  const documents = documentsData?.documents || []
+  const demo = isDemoMode()
 
-  // Cycle through placeholder questions
+  const { data: documentsData } = useSWR(demo ? null : 'documents', getDocuments)
+  const documents = demo ? [] : (documentsData?.documents || [])
+
+  // Cycle placeholder questions — only for real users
   useEffect(() => {
-    if (isFocused || query) return
-    
+    if (demo || isFocused || query) return
     const interval = setInterval(() => {
       setPlaceholderIndex((prev) => (prev + 1) % placeholderQuestions.length)
     }, 3000)
-    
     return () => clearInterval(interval)
-  }, [isFocused, query])
+  }, [isFocused, query, demo])
 
-  // Deduplicate sources by doc_name + section
   const deduplicatedSources = useMemo(() => {
     if (!response?.sources) return []
     const seen = new Set<string>()
@@ -196,6 +183,15 @@ export default function AskPage() {
     if (!q.trim()) {
       toast.error('Please enter a question')
       return
+    }
+
+    // In demo mode only allow the 4 pre-defined questions
+    if (demo) {
+      const allowed = demoQuestions.map(q => q.label.toLowerCase())
+      if (!allowed.includes(q.toLowerCase())) {
+        toast.error('Please use one of the pre-loaded questions above')
+        return
+      }
     }
 
     setIsLoading(true)
@@ -215,23 +211,26 @@ export default function AskPage() {
     } finally {
       setIsLoading(false)
     }
-  }, [query, filterDocType, filterDocName])
+  }, [query, filterDocType, filterDocName, demo])
 
   const handleQuickQuestion = (question: string) => {
     setQuery(question)
     handleSearch(question)
   }
 
+  const activePills = demo ? demoQuestions : quickQuestions
+
   return (
-    <motion.div 
+    <motion.div
       className="min-h-screen p-6 lg:p-8"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.4 }}
     >
       <div className="max-w-4xl mx-auto space-y-10">
+
         {/* Header */}
-        <motion.header 
+        <motion.header
           className="space-y-2"
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -239,38 +238,52 @@ export default function AskPage() {
         >
           <h1 className="text-3xl lg:text-4xl font-serif text-foreground">Ask a Question</h1>
           <p className="text-muted-foreground/70 text-sm tracking-wide">
-            Query your property documents using natural language
+            {demo
+              ? 'Explore real Woodcrest Capital property documents powered by RAG'
+              : 'Query your property documents using natural language'}
           </p>
         </motion.header>
 
-        {/* Quick Questions */}
+        {/* Quick Questions / Demo Pills */}
         <motion.section
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1, duration: 0.5 }}
         >
           <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground/60 mb-4 px-1">
-            Common Inquiries
+            {demo ? '✦ Click a Question to Try the RAG Pipeline' : 'Common Inquiries'}
           </p>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-            {quickQuestions.map((item, index) => {
+          <div className={cn(
+            'grid gap-3',
+            demo
+              ? 'grid-cols-1 sm:grid-cols-2'
+              : 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3'
+          )}>
+            {activePills.map((item, index) => {
               const Icon = item.icon
               return (
                 <motion.button
                   key={item.label}
                   onClick={() => handleQuickQuestion(item.label)}
                   disabled={isLoading}
-                  className="flex items-center gap-3 p-4 glass-card rounded-xl hover:border-primary/30 transition-all duration-300 text-left group disabled:opacity-50 disabled:cursor-not-allowed button-press"
+                  className={cn(
+                    'flex items-center gap-3 p-4 glass-card rounded-xl transition-all duration-300 text-left group disabled:opacity-50 disabled:cursor-not-allowed button-press',
+                    demo
+                      ? 'hover:border-primary/50 hover:bg-primary/5 border border-primary/20'
+                      : 'hover:border-primary/30'
+                  )}
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.1 + index * 0.05 }}
                   whileHover={{ scale: 1.02, y: -2 }}
                   whileTap={{ scale: 0.98 }}
                 >
-                  <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
+                  <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors shrink-0">
                     <Icon className="w-5 h-5 text-primary" />
                   </div>
-                  <span className="text-sm font-medium text-foreground/80 group-hover:text-foreground transition-colors">{item.label}</span>
+                  <span className="text-sm font-medium text-foreground/80 group-hover:text-foreground transition-colors">
+                    {item.label}
+                  </span>
                 </motion.button>
               )
             })}
@@ -278,93 +291,108 @@ export default function AskPage() {
         </motion.section>
 
         {/* Search Input */}
-        <motion.section 
+        <motion.section
           className="space-y-4"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2, duration: 0.5 }}
         >
           <div className="relative">
-            <Search className="absolute left-5 top-1/2 -translate-y-1/2 w-5 h-5 text-primary/50" />
-            <input
-              type="text"
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
-              onFocus={() => setIsFocused(true)}
-              onBlur={() => setIsFocused(false)}
-              placeholder={placeholderQuestions[placeholderIndex]}
-              className="w-full glass-card rounded-xl py-5 pl-14 pr-6 text-lg focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary/40 transition-all duration-300 placeholder:text-muted-foreground/30 caret-primary"
-              disabled={isLoading}
-            />
-            <motion.div 
-              className="absolute inset-0 rounded-xl pointer-events-none"
-              initial={false}
-              animate={isFocused ? { boxShadow: '0 0 0 2px rgba(201, 168, 76, 0.2), 0 0 40px rgba(201, 168, 76, 0.1)' } : { boxShadow: '0 0 0 0 transparent' }}
-              transition={{ duration: 0.3 }}
-            />
+            {demo ? (
+              // ── DEMO: locked input with explanation ──
+              <div className="relative">
+                <Lock className="absolute left-5 top-1/2 -translate-y-1/2 w-5 h-5 text-primary/30" />
+                <div className="w-full glass-card rounded-xl py-5 pl-14 pr-6 text-lg text-muted-foreground/30 border border-primary/10 cursor-not-allowed select-none">
+                  Use the questions above to explore the demo
+                </div>
+              </div>
+            ) : (
+              // ── REAL: normal input ──
+              <>
+                <Search className="absolute left-5 top-1/2 -translate-y-1/2 w-5 h-5 text-primary/50" />
+                <input
+                  type="text"
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
+                  onFocus={() => setIsFocused(true)}
+                  onBlur={() => setIsFocused(false)}
+                  placeholder={placeholderQuestions[placeholderIndex]}
+                  className="w-full glass-card rounded-xl py-5 pl-14 pr-6 text-lg focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary/40 transition-all duration-300 placeholder:text-muted-foreground/30 caret-primary"
+                  disabled={isLoading}
+                />
+                <motion.div
+                  className="absolute inset-0 rounded-xl pointer-events-none"
+                  initial={false}
+                  animate={isFocused
+                    ? { boxShadow: '0 0 0 2px rgba(201, 168, 76, 0.2), 0 0 40px rgba(201, 168, 76, 0.1)' }
+                    : { boxShadow: '0 0 0 0 transparent' }
+                  }
+                  transition={{ duration: 0.3 }}
+                />
+              </>
+            )}
           </div>
 
-          {/* Filters & Search Button */}
-          <div className="flex flex-wrap items-center gap-4">
-            <select
-              value={filterDocType}
-              onChange={(e) => setFilterDocType(e.target.value)}
-              className="glass-card rounded-lg px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 transition-all appearance-none cursor-pointer min-w-[160px]"
-              disabled={isLoading}
-            >
-              {docTypes.map((type) => (
-                <option key={type.value} value={type.value} className="bg-card">
-                  {type.label}
-                </option>
-              ))}
-            </select>
+          {/* Filters + Search button — hidden in demo */}
+          {!demo && (
+            <div className="flex flex-wrap items-center gap-4">
+              <select
+                value={filterDocType}
+                onChange={(e) => setFilterDocType(e.target.value)}
+                className="glass-card rounded-lg px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 transition-all appearance-none cursor-pointer min-w-[160px]"
+                disabled={isLoading}
+              >
+                {docTypes.map((type) => (
+                  <option key={type.value} value={type.value} className="bg-card">
+                    {type.label}
+                  </option>
+                ))}
+              </select>
 
-            <select
-              value={filterDocName}
-              onChange={(e) => setFilterDocName(e.target.value)}
-              className="glass-card rounded-lg px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 transition-all appearance-none cursor-pointer min-w-[160px]"
-              disabled={isLoading}
-            >
-              <option value="" className="bg-card">All Documents</option>
-              {documents.map((doc) => (
-                <option key={doc.doc_name} value={doc.doc_name} className="bg-card">
-                  {doc.doc_name}
-                </option>
-              ))}
-            </select>
+              <select
+                value={filterDocName}
+                onChange={(e) => setFilterDocName(e.target.value)}
+                className="glass-card rounded-lg px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 transition-all appearance-none cursor-pointer min-w-[160px]"
+                disabled={isLoading}
+              >
+                <option value="" className="bg-card">All Documents</option>
+                {documents.map((doc) => (
+                  <option key={doc.doc_name} value={doc.doc_name} className="bg-card">
+                    {doc.doc_name}
+                  </option>
+                ))}
+              </select>
 
-            <motion.button
-              onClick={() => handleSearch()}
-              disabled={isLoading || !query.trim()}
-              className="ml-auto bg-gradient-to-r from-primary to-primary-electric hover:from-primary-electric hover:to-primary text-primary-foreground font-bold px-8 py-3 rounded-lg transition-all duration-300 disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-3 button-press button-shimmer"
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-            >
-              {isLoading ? (
-                <>
-                  <motion.div
-                    animate={{ rotate: 360 }}
-                    transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
-                  >
-                    <Loader2 className="w-5 h-5" />
-                  </motion.div>
-                  <span className="text-sm uppercase tracking-[0.1em]">Analyzing</span>
-                </>
-              ) : (
-                <>
-                  <Search className="w-5 h-5" />
-                  <span className="text-sm uppercase tracking-[0.1em]">Search</span>
-                </>
-              )}
-            </motion.button>
-          </div>
+              <motion.button
+                onClick={() => handleSearch()}
+                disabled={isLoading || !query.trim()}
+                className="ml-auto bg-gradient-to-r from-primary to-primary-electric hover:from-primary-electric hover:to-primary text-primary-foreground font-bold px-8 py-3 rounded-lg transition-all duration-300 disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-3 button-press button-shimmer"
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+              >
+                {isLoading ? (
+                  <>
+                    <motion.div animate={{ rotate: 360 }} transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}>
+                      <Loader2 className="w-5 h-5" />
+                    </motion.div>
+                    <span className="text-sm uppercase tracking-[0.1em]">Analyzing</span>
+                  </>
+                ) : (
+                  <>
+                    <Search className="w-5 h-5" />
+                    <span className="text-sm uppercase tracking-[0.1em]">Search</span>
+                  </>
+                )}
+              </motion.button>
+            </div>
+          )}
         </motion.section>
 
         {/* Loading State */}
         <AnimatePresence>
           {isLoading && (
-            <motion.div 
+            <motion.div
               className="flex flex-col items-center justify-center py-20"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -384,14 +412,14 @@ export default function AskPage() {
                   <div className="w-12 h-12 rounded-full border-2 border-transparent border-t-primary" />
                 </motion.div>
               </motion.div>
-              <motion.p 
+              <motion.p
                 className="text-sm text-muted-foreground mt-6 tracking-wide"
                 animate={{ opacity: [0.5, 1, 0.5] }}
                 transition={{ duration: 1.5, repeat: Infinity }}
               >
-                Analyzing documents...
+                {demo ? 'Running hybrid search + RRF...' : 'Analyzing documents...'}
               </motion.p>
-              <motion.div 
+              <motion.div
                 className="absolute inset-x-0 h-px bg-gradient-to-r from-transparent via-primary/30 to-transparent"
                 animate={{ y: [0, 100, 0] }}
                 transition={{ duration: 2, repeat: Infinity }}
@@ -403,17 +431,16 @@ export default function AskPage() {
         {/* Results */}
         <AnimatePresence>
           {response && !isLoading && (
-            <motion.section 
+            <motion.section
               className="space-y-6"
               initial={{ opacity: 0, y: 40 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -20 }}
               transition={{ duration: 0.5, ease: [0.4, 0, 0.2, 1] }}
             >
-              {/* Confidence Badge */}
               <div className="flex items-center justify-between px-1">
                 <ConfidenceBadge confidence={response.overall_confidence} />
-                <motion.span 
+                <motion.span
                   className="text-[10px] text-muted-foreground/60 uppercase tracking-[0.1em]"
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
@@ -423,8 +450,7 @@ export default function AskPage() {
                 </motion.span>
               </div>
 
-              {/* Answer Box */}
-              <motion.div 
+              <motion.div
                 className="glass-card rounded-xl p-8 border-l-4 border-l-primary relative overflow-hidden"
                 initial={{ opacity: 0, scale: 0.98 }}
                 animate={{ opacity: 1, scale: 1 }}
@@ -439,9 +465,8 @@ export default function AskPage() {
                 <AnimatedAnswer text={response.answer} />
               </motion.div>
 
-              {/* Sources */}
               {deduplicatedSources.length > 0 && (
-                <motion.div 
+                <motion.div
                   className="space-y-4"
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
@@ -452,7 +477,11 @@ export default function AskPage() {
                   </p>
                   <div className="space-y-3">
                     {deduplicatedSources.map((source, index) => (
-                      <SourceCard key={`${source.doc_name}-${source.section}-${index}`} source={source} index={index} />
+                      <SourceCard
+                        key={`${source.doc_name}-${source.section}-${index}`}
+                        source={source}
+                        index={index}
+                      />
                     ))}
                   </div>
                 </motion.div>
@@ -486,25 +515,30 @@ export default function AskPage() {
 
         {/* Empty State */}
         {!response && !isLoading && (
-          <motion.div 
+          <motion.div
             className="flex flex-col items-center justify-center py-20 text-center"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.3 }}
           >
-            <motion.div 
+            <motion.div
               className="w-20 h-20 rounded-full bg-primary/5 border border-primary/10 flex items-center justify-center mb-6"
               animate={{ scale: [1, 1.05, 1] }}
               transition={{ duration: 3, repeat: Infinity }}
             >
               <Search className="w-10 h-10 text-primary/30" />
             </motion.div>
-            <h3 className="text-lg font-serif text-foreground/80 mb-2">Ready to Search</h3>
+            <h3 className="text-lg font-serif text-foreground/80 mb-2">
+              {demo ? 'Click a question above to see it in action' : 'Ready to Search'}
+            </h3>
             <p className="text-sm text-muted-foreground/60 max-w-md leading-relaxed">
-              Enter your question above or select a common inquiry. Our AI will analyze your property documents and provide accurate answers with source citations.
+              {demo
+                ? 'Each question runs a live RAG pipeline — vector search + keyword search merged with RRF, answered by GPT-4o-mini with source citations.'
+                : 'Enter your question above or select a common inquiry. Our AI will analyze your property documents and provide accurate answers with source citations.'}
             </p>
           </motion.div>
         )}
+
       </div>
     </motion.div>
   )

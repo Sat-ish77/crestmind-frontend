@@ -25,6 +25,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const storedUser = localStorage.getItem('crestmind_user')
     if (storedUser) {
       setUser(JSON.parse(storedUser))
+    } else if (localStorage.getItem('demo_mode') === 'true') {
+      // Recognize demo session as valid — no password needed
+      setUser({ username: 'Demo User' })
     }
     setIsLoading(false)
   }, [])
@@ -42,6 +45,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const logout = () => {
     setUser(null)
     localStorage.removeItem('crestmind_user')
+    localStorage.removeItem('demo_mode')
+    localStorage.removeItem('auth')
+    localStorage.removeItem('demo_user')
   }
 
   return (
