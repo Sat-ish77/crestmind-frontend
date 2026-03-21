@@ -1,12 +1,22 @@
 'use client'
 
-import { useState, useMemo } from 'react'
-import { Search, DollarSign, CalendarDays, ShieldCheck, ParkingCircle, Droplet, PawPrint, ChevronDown, ChevronUp, CheckCircle, AlertCircle, AlertTriangle, FileText } from 'lucide-react'
+import { useState, useMemo, useEffect, useCallback } from 'react'
+import { Search, DollarSign, CalendarDays, ShieldCheck, ParkingCircle, Droplet, PawPrint, ChevronDown, ChevronUp, CheckCircle, AlertCircle, AlertTriangle, FileText, Loader2 } from 'lucide-react'
+import { motion, AnimatePresence } from 'framer-motion'
 import { askQuestion, AskResponse, Source, getDocuments } from '@/lib/api'
 import { Spinner } from '@/components/ui/spinner'
 import { toast } from 'sonner'
 import useSWR from 'swr'
 import { cn } from '@/lib/utils'
+
+const placeholderQuestions = [
+  'What is the monthly rent for the property?',
+  'When does the lease agreement expire?',
+  'What are the parking fees?',
+  'Who is responsible for utility payments?',
+  'What is the security deposit amount?',
+  'What is the pet policy?',
+]
 
 const quickQuestions = [
   { icon: DollarSign, label: 'What is the monthly rent?' },
@@ -32,27 +42,32 @@ function ConfidenceBadge({ confidence }: { confidence: 'high' | 'medium' | 'low'
     high: {
       icon: CheckCircle,
       label: 'High Confidence',
-      className: 'bg-success/10 border-success/20 text-success confidence-high',
+      className: 'bg-success/10 border-success/30 text-success confidence-high',
     },
     medium: {
       icon: AlertCircle,
       label: 'Medium Confidence',
-      className: 'bg-warning/10 border-warning/20 text-warning',
+      className: 'bg-warning/10 border-warning/30 text-warning confidence-medium',
     },
     low: {
       icon: AlertTriangle,
       label: 'Low Confidence',
-      className: 'bg-destructive/10 border-destructive/20 text-destructive',
+      className: 'bg-destructive/10 border-destructive/30 text-destructive confidence-low',
     },
   }
 
   const { icon: Icon, label, className } = config[confidence]
 
   return (
-    <div className={cn('inline-flex items-center gap-2 px-3 py-1.5 rounded-full border', className)}>
-      <Icon className="w-3.5 h-3.5" />
-      <span className="text-[10px] font-bold uppercase tracking-wider">{label}</span>
-    </div>
+    <motion.div 
+      className={cn('inline-flex items-center gap-2 px-4 py-2 rounded-full border', className)}
+      initial={{ opacity: 0, scale: 0.9 }}
+      animate={{ opacity: 1, scale: 1 }}
+      transition={{ duration: 0.3 }}
+    >
+      <Icon className="w-4 h-4" />
+      <span className="text-[10px] font-bold uppercase tracking-[0.15em]">{label}</span>
+    </motion.div>
   )
 }
 
@@ -66,39 +81,78 @@ function SourceCard({ source, index }: { source: Source; index: number }) {
   }
 
   return (
-    <div className="border border-border rounded-xl overflow-hidden bg-card/30">
+    <motion.div 
+      className="border border-border/50 rounded-xl overflow-hidden glass-card"
+      initial={{ opacity: 0, x: 30 }}
+      animate={{ opacity: 1, x: 0 }}
+      transition={{ delay: index * 0.1, duration: 0.4, ease: [0.4, 0, 0.2, 1] }}
+    >
       <button
         onClick={() => setIsExpanded(!isExpanded)}
-        className="w-full flex items-center justify-between p-4 bg-primary/5 hover:bg-primary/10 transition-colors"
+        className="w-full flex items-center justify-between p-4 bg-primary/5 hover:bg-primary/10 transition-all duration-300"
       >
         <div className="flex items-center gap-3">
           <FileText className="w-4 h-4 text-primary/60" />
           <div className="text-left">
             <p className="text-sm font-semibold">{source.doc_name}</p>
-            <p className="text-[10px] text-muted-foreground uppercase tracking-wider">
-              Page {source.page_number} · {source.section}
+            <p className="text-[10px] text-muted-foreground/60 uppercase tracking-[0.1em]">
+              Page {source.page_number} | {source.section}
             </p>
           </div>
         </div>
         <div className="flex items-center gap-3">
-          <span className={cn('text-[10px] font-bold uppercase', confidenceConfig[source.confidence])}>
+          <span className={cn('text-[10px] font-bold uppercase tracking-wider', confidenceConfig[source.confidence])}>
             {source.confidence}
           </span>
-          {isExpanded ? (
-            <ChevronUp className="w-4 h-4 text-muted-foreground" />
-          ) : (
+          <motion.div
+            animate={{ rotate: isExpanded ? 180 : 0 }}
+            transition={{ duration: 0.2 }}
+          >
             <ChevronDown className="w-4 h-4 text-muted-foreground" />
-          )}
+          </motion.div>
         </div>
       </button>
-      {isExpanded && (
-        <div className="p-5 bg-background/40 border-t border-border">
-          <pre className="font-mono text-sm text-muted-foreground leading-relaxed whitespace-pre-wrap">
-            {source.chunk_text}
-          </pre>
-        </div>
-      )}
-    </div>
+      <AnimatePresence>
+        {isExpanded && (
+          <motion.div 
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
+            className="overflow-hidden"
+          >
+            <div className="p-5 bg-background/60 border-t border-border/30">
+              <div className="bg-muted/30 rounded-lg p-4 border border-border/30">
+                <pre className="font-mono text-sm text-muted-foreground leading-relaxed whitespace-pre-wrap terminal-cursor">
+                  {source.chunk_text}
+                </pre>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </motion.div>
+  )
+}
+
+// Word by word reveal component
+function AnimatedAnswer({ text }: { text: string }) {
+  const words = text.split(' ')
+  
+  return (
+    <motion.p className="text-lg leading-relaxed text-foreground">
+      {words.map((word, index) => (
+        <motion.span
+          key={index}
+          className="inline-block mr-1.5"
+          initial={{ opacity: 0, y: 5 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: index * 0.02, duration: 0.2 }}
+        >
+          {word}
+        </motion.span>
+      ))}
+    </motion.p>
   )
 }
 
@@ -108,9 +162,22 @@ export default function AskPage() {
   const [filterDocName, setFilterDocName] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const [response, setResponse] = useState<AskResponse | null>(null)
+  const [placeholderIndex, setPlaceholderIndex] = useState(0)
+  const [isFocused, setIsFocused] = useState(false)
 
   const { data: documentsData } = useSWR('documents', getDocuments)
   const documents = documentsData?.documents || []
+
+  // Cycle through placeholder questions
+  useEffect(() => {
+    if (isFocused || query) return
+    
+    const interval = setInterval(() => {
+      setPlaceholderIndex((prev) => (prev + 1) % placeholderQuestions.length)
+    }, 3000)
+    
+    return () => clearInterval(interval)
+  }, [isFocused, query])
 
   // Deduplicate sources by doc_name + section
   const deduplicatedSources = useMemo(() => {
@@ -124,7 +191,7 @@ export default function AskPage() {
     })
   }, [response?.sources])
 
-  const handleSearch = async (searchQuery?: string) => {
+  const handleSearch = useCallback(async (searchQuery?: string) => {
     const q = searchQuery || query
     if (!q.trim()) {
       toast.error('Please enter a question')
@@ -148,7 +215,7 @@ export default function AskPage() {
     } finally {
       setIsLoading(false)
     }
-  }
+  }, [query, filterDocType, filterDocName])
 
   const handleQuickQuestion = (question: string) => {
     setQuery(question)
@@ -156,51 +223,85 @@ export default function AskPage() {
   }
 
   return (
-    <div className="min-h-screen p-8">
+    <motion.div 
+      className="min-h-screen p-6 lg:p-8"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.4 }}
+    >
       <div className="max-w-4xl mx-auto space-y-10">
         {/* Header */}
-        <header className="space-y-2">
-          <h1 className="text-3xl font-serif text-foreground">Ask a Question</h1>
-          <p className="text-muted-foreground">
+        <motion.header 
+          className="space-y-2"
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+        >
+          <h1 className="text-3xl lg:text-4xl font-serif text-foreground">Ask a Question</h1>
+          <p className="text-muted-foreground/70 text-sm tracking-wide">
             Query your property documents using natural language
           </p>
-        </header>
+        </motion.header>
 
         {/* Quick Questions */}
-        <section>
-          <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground mb-4 px-1">
+        <motion.section
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.1, duration: 0.5 }}
+        >
+          <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground/60 mb-4 px-1">
             Common Inquiries
           </p>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-            {quickQuestions.map((item) => {
+            {quickQuestions.map((item, index) => {
               const Icon = item.icon
               return (
-                <button
+                <motion.button
                   key={item.label}
                   onClick={() => handleQuickQuestion(item.label)}
                   disabled={isLoading}
-                  className="flex items-center gap-3 p-4 bg-primary/5 border border-primary/10 rounded-xl hover:border-primary/40 hover:bg-primary/10 transition-all text-left group disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="flex items-center gap-3 p-4 glass-card rounded-xl hover:border-primary/30 transition-all duration-300 text-left group disabled:opacity-50 disabled:cursor-not-allowed button-press"
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.1 + index * 0.05 }}
+                  whileHover={{ scale: 1.02, y: -2 }}
+                  whileTap={{ scale: 0.98 }}
                 >
-                  <Icon className="w-5 h-5 text-primary group-hover:scale-110 transition-transform" />
-                  <span className="text-sm font-medium">{item.label}</span>
-                </button>
+                  <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
+                    <Icon className="w-5 h-5 text-primary" />
+                  </div>
+                  <span className="text-sm font-medium text-foreground/80 group-hover:text-foreground transition-colors">{item.label}</span>
+                </motion.button>
               )
             })}
           </div>
-        </section>
+        </motion.section>
 
         {/* Search Input */}
-        <section className="space-y-4">
+        <motion.section 
+          className="space-y-4"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2, duration: 0.5 }}
+        >
           <div className="relative">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-primary" />
+            <Search className="absolute left-5 top-1/2 -translate-y-1/2 w-5 h-5 text-primary/50" />
             <input
               type="text"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
-              placeholder="Ask anything about your property documents..."
-              className="w-full bg-card/50 border border-border rounded-xl py-5 pl-12 pr-6 text-lg focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary input-glow transition-all placeholder:text-muted-foreground/50"
+              onFocus={() => setIsFocused(true)}
+              onBlur={() => setIsFocused(false)}
+              placeholder={placeholderQuestions[placeholderIndex]}
+              className="w-full glass-card rounded-xl py-5 pl-14 pr-6 text-lg focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary/40 transition-all duration-300 placeholder:text-muted-foreground/30 caret-primary"
               disabled={isLoading}
+            />
+            <motion.div 
+              className="absolute inset-0 rounded-xl pointer-events-none"
+              initial={false}
+              animate={isFocused ? { boxShadow: '0 0 0 2px rgba(201, 168, 76, 0.2), 0 0 40px rgba(201, 168, 76, 0.1)' } : { boxShadow: '0 0 0 0 transparent' }}
+              transition={{ duration: 0.3 }}
             />
           </div>
 
@@ -209,11 +310,11 @@ export default function AskPage() {
             <select
               value={filterDocType}
               onChange={(e) => setFilterDocType(e.target.value)}
-              className="bg-card border border-border rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary"
+              className="glass-card rounded-lg px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 transition-all appearance-none cursor-pointer min-w-[160px]"
               disabled={isLoading}
             >
               {docTypes.map((type) => (
-                <option key={type.value} value={type.value}>
+                <option key={type.value} value={type.value} className="bg-card">
                   {type.label}
                 </option>
               ))}
@@ -222,91 +323,189 @@ export default function AskPage() {
             <select
               value={filterDocName}
               onChange={(e) => setFilterDocName(e.target.value)}
-              className="bg-card border border-border rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary"
+              className="glass-card rounded-lg px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 transition-all appearance-none cursor-pointer min-w-[160px]"
               disabled={isLoading}
             >
-              <option value="">All Documents</option>
+              <option value="" className="bg-card">All Documents</option>
               {documents.map((doc) => (
-                <option key={doc.doc_name} value={doc.doc_name}>
+                <option key={doc.doc_name} value={doc.doc_name} className="bg-card">
                   {doc.doc_name}
                 </option>
               ))}
             </select>
 
-            <button
+            <motion.button
               onClick={() => handleSearch()}
               disabled={isLoading || !query.trim()}
-              className="ml-auto bg-primary hover:bg-primary/90 text-primary-foreground font-semibold px-6 py-2.5 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+              className="ml-auto bg-gradient-to-r from-primary to-primary-electric hover:from-primary-electric hover:to-primary text-primary-foreground font-bold px-8 py-3 rounded-lg transition-all duration-300 disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-3 button-press button-shimmer"
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
             >
               {isLoading ? (
                 <>
-                  <Spinner className="w-4 h-4" />
-                  <span>Searching...</span>
+                  <motion.div
+                    animate={{ rotate: 360 }}
+                    transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
+                  >
+                    <Loader2 className="w-5 h-5" />
+                  </motion.div>
+                  <span className="text-sm uppercase tracking-[0.1em]">Analyzing</span>
                 </>
               ) : (
                 <>
-                  <Search className="w-4 h-4" />
-                  <span>Search</span>
+                  <Search className="w-5 h-5" />
+                  <span className="text-sm uppercase tracking-[0.1em]">Search</span>
                 </>
               )}
-            </button>
+            </motion.button>
           </div>
-        </section>
+        </motion.section>
+
+        {/* Loading State */}
+        <AnimatePresence>
+          {isLoading && (
+            <motion.div 
+              className="flex flex-col items-center justify-center py-20"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+            >
+              <motion.div className="relative">
+                <motion.div
+                  className="w-16 h-16 rounded-full border-2 border-primary/20"
+                  animate={{ scale: [1, 1.2, 1], opacity: [0.5, 0.2, 0.5] }}
+                  transition={{ duration: 2, repeat: Infinity }}
+                />
+                <motion.div
+                  className="absolute inset-0 flex items-center justify-center"
+                  animate={{ rotate: 360 }}
+                  transition={{ duration: 2, repeat: Infinity, ease: 'linear' }}
+                >
+                  <div className="w-12 h-12 rounded-full border-2 border-transparent border-t-primary" />
+                </motion.div>
+              </motion.div>
+              <motion.p 
+                className="text-sm text-muted-foreground mt-6 tracking-wide"
+                animate={{ opacity: [0.5, 1, 0.5] }}
+                transition={{ duration: 1.5, repeat: Infinity }}
+              >
+                Analyzing documents...
+              </motion.p>
+              <motion.div 
+                className="absolute inset-x-0 h-px bg-gradient-to-r from-transparent via-primary/30 to-transparent"
+                animate={{ y: [0, 100, 0] }}
+                transition={{ duration: 2, repeat: Infinity }}
+              />
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         {/* Results */}
-        {isLoading && (
-          <div className="flex flex-col items-center justify-center py-16">
-            <Spinner className="w-8 h-8 text-primary mb-4" />
-            <p className="text-sm text-muted-foreground">Analyzing your documents...</p>
-          </div>
-        )}
-
-        {response && !isLoading && (
-          <section className="space-y-6">
-            {/* Confidence Badge */}
-            <div className="flex items-center justify-between px-1">
-              <ConfidenceBadge confidence={response.overall_confidence} />
-              <span className="text-xs text-muted-foreground">
-                {response.found_in_documents ? 'Found in documents' : 'No direct match found'}
-              </span>
-            </div>
-
-            {/* Answer Box */}
-            <div className="bg-primary/5 border-l-4 border-primary rounded-r-xl p-8 gold-glow-sm">
-              <p className="text-lg leading-relaxed text-foreground whitespace-pre-wrap">
-                {response.answer}
-              </p>
-            </div>
-
-            {/* Sources */}
-            {deduplicatedSources.length > 0 && (
-              <div className="space-y-4">
-                <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground px-1">
-                  Source Citations ({deduplicatedSources.length})
-                </p>
-                <div className="space-y-3">
-                  {deduplicatedSources.map((source, index) => (
-                    <SourceCard key={`${source.doc_name}-${source.section}-${index}`} source={source} index={index} />
-                  ))}
-                </div>
+        <AnimatePresence>
+          {response && !isLoading && (
+            <motion.section 
+              className="space-y-6"
+              initial={{ opacity: 0, y: 40 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              transition={{ duration: 0.5, ease: [0.4, 0, 0.2, 1] }}
+            >
+              {/* Confidence Badge */}
+              <div className="flex items-center justify-between px-1">
+                <ConfidenceBadge confidence={response.overall_confidence} />
+                <motion.span 
+                  className="text-[10px] text-muted-foreground/60 uppercase tracking-[0.1em]"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.3 }}
+                >
+                  {response.found_in_documents ? 'Found in documents' : 'No direct match found'}
+                </motion.span>
               </div>
-            )}
-          </section>
-        )}
+
+              {/* Answer Box */}
+              <motion.div 
+                className="glass-card rounded-xl p-8 border-l-4 border-l-primary relative overflow-hidden"
+                initial={{ opacity: 0, scale: 0.98 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ delay: 0.1, duration: 0.4 }}
+              >
+                <motion.div
+                  className="absolute left-0 top-0 bottom-0 w-1 bg-primary"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: [0.5, 1, 0.5] }}
+                  transition={{ duration: 2, repeat: 2 }}
+                />
+                <AnimatedAnswer text={response.answer} />
+              </motion.div>
+
+              {/* Sources */}
+              {deduplicatedSources.length > 0 && (
+                <motion.div 
+                  className="space-y-4"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.4 }}
+                >
+                  <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground/60 px-1">
+                    Source Citations ({deduplicatedSources.length})
+                  </p>
+                  <div className="space-y-3">
+                    {deduplicatedSources.map((source, index) => (
+                      <SourceCard key={`${source.doc_name}-${source.section}-${index}`} source={source} index={index} />
+                    ))}
+                  </div>
+                </motion.div>
+              )}
+            </motion.section>
+          )}
+        </AnimatePresence>
+
+        {/* Not Found State */}
+        <AnimatePresence>
+          {response && !response.found_in_documents && !isLoading && (
+            <motion.div
+              className="flex flex-col items-center text-center py-8"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0 }}
+            >
+              <motion.div
+                className="w-16 h-16 rounded-full bg-destructive/10 flex items-center justify-center mb-4"
+                animate={{ rotate: [0, 10, -10, 0] }}
+                transition={{ duration: 0.5 }}
+              >
+                <Search className="w-8 h-8 text-destructive/60" />
+              </motion.div>
+              <p className="text-sm text-muted-foreground">
+                Try rephrasing your question or uploading more documents.
+              </p>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         {/* Empty State */}
         {!response && !isLoading && (
-          <div className="flex flex-col items-center justify-center py-16 text-center">
-            <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mb-4">
-              <Search className="w-8 h-8 text-primary/60" />
-            </div>
-            <h3 className="text-lg font-semibold mb-2">Ready to Search</h3>
-            <p className="text-sm text-muted-foreground max-w-md">
-              Enter your question above or select a common inquiry to get started. Our AI will analyze your property documents and provide accurate answers with source citations.
+          <motion.div 
+            className="flex flex-col items-center justify-center py-20 text-center"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.3 }}
+          >
+            <motion.div 
+              className="w-20 h-20 rounded-full bg-primary/5 border border-primary/10 flex items-center justify-center mb-6"
+              animate={{ scale: [1, 1.05, 1] }}
+              transition={{ duration: 3, repeat: Infinity }}
+            >
+              <Search className="w-10 h-10 text-primary/30" />
+            </motion.div>
+            <h3 className="text-lg font-serif text-foreground/80 mb-2">Ready to Search</h3>
+            <p className="text-sm text-muted-foreground/60 max-w-md leading-relaxed">
+              Enter your question above or select a common inquiry. Our AI will analyze your property documents and provide accurate answers with source citations.
             </p>
-          </div>
+          </motion.div>
         )}
       </div>
-    </div>
+    </motion.div>
   )
 }
