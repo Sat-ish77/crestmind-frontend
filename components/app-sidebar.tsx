@@ -57,14 +57,13 @@ export function AppSidebar({ onNavigate }: AppSidebarProps) {
       <div className="p-6">
         <Link href="/dashboard" className="flex items-center gap-3" onClick={handleNavigation}>
           <motion.div 
-            className="w-10 h-10 rounded-lg overflow-hidden bg-card flex items-center justify-center logo-breathe"
+            className="relative w-10 h-10 rounded-lg overflow-hidden bg-card logo-breathe"
           >
             <Image
               src="/images/logo.jpeg"
               alt="CrestMind AI"
-              width={40}
-              height={40}
-              className="object-cover w-full h-full"
+              fill
+              className="object-cover"
             />
           </motion.div>
           <div className="flex flex-col">

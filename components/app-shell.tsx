@@ -7,7 +7,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { useAuth } from '@/lib/auth-context'
 import { AppSidebar } from './app-sidebar'
 import { Spinner } from '@/components/ui/spinner'
-import { Sheet, SheetContent, SheetTrigger, SheetTitle } from '@/components/ui/sheet'
+import { Sheet, SheetContent, SheetTrigger, SheetTitle, SheetDescription } from '@/components/ui/sheet'
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const { user, isLoading } = useAuth()
@@ -85,6 +85,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             </SheetTrigger>
             <SheetContent side="left" className="p-0 w-64 bg-sidebar border-r border-sidebar-border">
               <SheetTitle className="sr-only">Navigation Menu</SheetTitle>
+              <SheetDescription className="sr-only">Main navigation and document list</SheetDescription>
               <AppSidebar onNavigate={() => setIsMobileMenuOpen(false)} />
             </SheetContent>
           </Sheet>

@@ -86,7 +86,7 @@ function ParticleField() {
     }
   }, [])
   
-  return <canvas ref={canvasRef} className="particle-canvas" />
+  return <canvas ref={canvasRef} className="particle-canvas z-0" />
 }
 
 // Animated gold ring around logo
@@ -180,15 +180,15 @@ function LoginForm() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-background relative overflow-hidden">
+    <div className="min-h-screen flex flex-col items-center justify-start pt-[12vh] md:pt-[15vh] bg-background relative overflow-hidden">
       {/* Particle Background */}
       <ParticleField />
       
       {/* Dot Grid Background */}
-      <div className="absolute inset-0 dot-grid" />
+      <div className="absolute inset-0 dot-grid z-0" />
       
       {/* Noise Texture */}
-      <div className="noise-texture" />
+      <div className="noise-texture z-0" />
 
       {/* Corner Accents */}
       <motion.div 
@@ -209,7 +209,7 @@ function LoginForm() {
         {!isSuccess ? (
           <motion.div
             key="login-card"
-            className="relative w-full max-w-md px-6 z-10"
+            className="relative w-full max-w-md md:max-w-lg px-6 z-20"
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -50, scale: 0.95 }}
@@ -235,9 +235,8 @@ function LoginForm() {
                   <Image
                     src="/images/logo.jpeg"
                     alt="CrestMind AI"
-                    width={80}
-                    height={80}
-                    className="object-cover relative z-10 w-full h-full"
+                    fill
+                    className="object-cover relative z-10"
                   />
                 </div>
                 <motion.h1 
@@ -400,7 +399,7 @@ function LoginForm() {
 
       {/* Footer */}
       <motion.footer 
-        className="mt-16 text-center z-10"
+        className="mt-auto pb-8 text-center z-20"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 0.8 }}
