@@ -3,6 +3,8 @@
 import { useState, useMemo, useEffect, useCallback } from 'react'
 import { Search, DollarSign, CalendarDays, ShieldCheck, ParkingCircle, Droplet, PawPrint, ChevronDown, FileText, Loader2, CheckCircle, AlertCircle, AlertTriangle, RefreshCw, Lock } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
+import ReactMarkdown from 'react-markdown'
+import remarkGfm from 'remark-gfm'
 import { askQuestion, AskResponse, Source, getDocuments, isDemoMode } from '@/lib/api'
 import { Spinner } from '@/components/ui/spinner'
 import { toast } from 'sonner'
@@ -125,22 +127,90 @@ function SourceCard({ source, index }: { source: Source; index: number }) {
   )
 }
 
-function AnimatedAnswer({ text }: { text: string }) {
-  const words = text.split(' ')
+// ── REPLACED AnimatedAnswer with MarkdownAnswer ──
+// Properly renders markdown tables, bold, lists from LLM output
+function MarkdownAnswer({ text }: { text: string }) {
   return (
-    <motion.p className="text-lg leading-relaxed text-foreground">
-      {words.map((word, index) => (
-        <motion.span
-          key={index}
-          className="inline-block mr-1.5"
-          initial={{ opacity: 0, y: 5 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: index * 0.02, duration: 0.2 }}
-        >
-          {word}
-        </motion.span>
-      ))}
-    </motion.p>
+    <motion.div
+      className="prose prose-sm max-w-none text-foreground"
+      initial={{ opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.4, ease: 'easeOut' }}
+    >
+      <ReactMarkdown
+        remarkPlugins={[remarkGfm]}
+        components={{
+          // Tables
+          table: ({ children }) => (
+            <div className="overflow-x-auto my-4">
+              <table className="w-full border-collapse text-sm">
+                {children}
+              </table>
+            </div>
+          ),
+          thead: ({ children }) => (
+            <thead className="bg-primary/10 border-b border-primary/20">
+              {children}
+            </thead>
+          ),
+          tbody: ({ children }) => (
+            <tbody className="divide-y divide-border/30">
+              {children}
+            </tbody>
+          ),
+          tr: ({ children }) => (
+            <tr className="hover:bg-primary/5 transition-colors">
+              {children}
+            </tr>
+          ),
+          th: ({ children }) => (
+            <th className="px-4 py-3 text-left text-[10px] font-bold uppercase tracking-[0.15em] text-primary/80">
+              {children}
+            </th>
+          ),
+          td: ({ children }) => (
+            <td className="px-4 py-3 text-sm text-foreground/80">
+              {children}
+            </td>
+          ),
+          // Text elements
+          p: ({ children }) => (
+            <p className="text-base leading-relaxed text-foreground mb-3 last:mb-0">
+              {children}
+            </p>
+          ),
+          strong: ({ children }) => (
+            <strong className="font-semibold text-foreground">
+              {children}
+            </strong>
+          ),
+          // Lists
+          ul: ({ children }) => (
+            <ul className="list-disc list-inside space-y-1 text-foreground/80 mb-3">
+              {children}
+            </ul>
+          ),
+          ol: ({ children }) => (
+            <ol className="list-decimal list-inside space-y-1 text-foreground/80 mb-3">
+              {children}
+            </ol>
+          ),
+          li: ({ children }) => (
+            <li className="text-sm text-foreground/80">
+              {children}
+            </li>
+          ),
+          // Code (for source citations)
+          code: ({ children }) => (
+            <code className="font-mono text-xs bg-muted/50 px-1.5 py-0.5 rounded text-primary/80">
+              {children}
+            </code>
+          ),
+        }}
+      >
+        {text}
+      </ReactMarkdown>
+    </motion.div>
   )
 }
 
@@ -299,7 +369,6 @@ export default function AskPage() {
         >
           <div className="relative">
             {demo ? (
-              // ── DEMO: locked input with explanation ──
               <div className="relative">
                 <Lock className="absolute left-5 top-1/2 -translate-y-1/2 w-5 h-5 text-primary/30" />
                 <div className="w-full glass-card rounded-xl py-5 pl-14 pr-6 text-lg text-muted-foreground/30 border border-primary/10 cursor-not-allowed select-none">
@@ -307,7 +376,6 @@ export default function AskPage() {
                 </div>
               </div>
             ) : (
-              // ── REAL: normal input ──
               <>
                 <Search className="absolute left-5 top-1/2 -translate-y-1/2 w-5 h-5 text-primary/50" />
                 <input
@@ -462,7 +530,8 @@ export default function AskPage() {
                   animate={{ opacity: [0.5, 1, 0.5] }}
                   transition={{ duration: 2, repeat: 2 }}
                 />
-                <AnimatedAnswer text={response.answer} />
+                {/* ── FIXED: MarkdownAnswer replaces AnimatedAnswer ── */}
+                <MarkdownAnswer text={response.answer} />
               </motion.div>
 
               {deduplicatedSources.length > 0 && (

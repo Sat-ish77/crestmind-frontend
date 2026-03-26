@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import { DM_Sans, DM_Serif_Display, DM_Mono } from 'next/font/google'
 import { Analytics } from '@vercel/analytics/next'
 import { Toaster } from 'sonner'
+import { ThemeProvider } from 'next-themes'
 import './globals.css'
 
 const dmSans = DM_Sans({ 
@@ -50,26 +51,34 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="en" className="dark">
+    <html lang="en" suppressHydrationWarning>
       <body className={`${dmSans.variable} ${dmSerif.variable} ${dmMono.variable} font-sans antialiased`}>
-        {children}
-        <Toaster 
-          position="top-right" 
-          toastOptions={{
-            style: {
-              background: 'rgba(20, 18, 16, 0.9)',
-              backdropFilter: 'blur(20px)',
-              border: '1px solid rgba(201, 168, 76, 0.15)',
-              color: '#f0ead8',
-              boxShadow: '0 10px 40px rgba(0, 0, 0, 0.4)',
-            },
-            classNames: {
-              success: 'border-success/30',
-              error: 'border-destructive/30',
-            },
-          }}
-        />
-        <Analytics />
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="dark"
+          themes={["dark", "light", "green"]}
+          storageKey="crestmind-theme"
+          disableTransitionOnChange={false}
+        >
+          {children}
+          <Toaster 
+            position="top-right" 
+            toastOptions={{
+              style: {
+                background: 'rgba(20, 18, 16, 0.9)',
+                backdropFilter: 'blur(20px)',
+                border: '1px solid rgba(201, 168, 76, 0.15)',
+                color: '#f0ead8',
+                boxShadow: '0 10px 40px rgba(0, 0, 0, 0.4)',
+              },
+              classNames: {
+                success: 'border-success/30',
+                error: 'border-destructive/30',
+              },
+            }}
+          />
+          <Analytics />
+        </ThemeProvider>
       </body>
     </html>
   )

@@ -625,3 +625,154 @@
     transition-duration: 0.01ms !important;
   }
 }
+
+/* ═══════════════════════════════════════════
+   THEME: LIGHT (White + Indigo)
+   Clean professional — Linear/Notion style
+   ═══════════════════════════════════════════ */
+.light {
+  --background: #ffffff;
+  --foreground: #1e1b4b;
+  --card: rgba(255, 255, 255, 0.9);
+  --card-foreground: #1e1b4b;
+  --popover: rgba(255, 255, 255, 0.95);
+  --popover-foreground: #1e1b4b;
+  --primary: #4f46e5;
+  --primary-foreground: #ffffff;
+  --primary-electric: #6366f1;
+  --primary-dim: #818cf8;
+  --secondary: #f1f5f9;
+  --secondary-foreground: #1e1b4b;
+  --muted: #f1f5f9;
+  --muted-foreground: #64748b;
+  --accent: #4f46e5;
+  --accent-foreground: #ffffff;
+  --destructive: #ef4444;
+  --destructive-foreground: #ffffff;
+  --success: #16a34a;
+  --success-foreground: #ffffff;
+  --warning: #d97706;
+  --warning-foreground: #ffffff;
+  --border: rgba(79, 70, 229, 0.15);
+  --input: rgba(79, 70, 229, 0.1);
+  --ring: #4f46e5;
+  --gold-light: #c7d2fe;
+  --sidebar: rgba(248, 250, 252, 0.98);
+  --sidebar-foreground: #1e1b4b;
+  --sidebar-primary: #4f46e5;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: rgba(79, 70, 229, 0.06);
+  --sidebar-accent-foreground: #1e1b4b;
+  --sidebar-border: rgba(79, 70, 229, 0.1);
+  --sidebar-ring: #4f46e5;
+}
+
+/* Override glass cards for light theme */
+.light .glass-card {
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(79, 70, 229, 0.12);
+  box-shadow:
+    0 0 0 1px rgba(79, 70, 229, 0.06),
+    0 4px 24px rgba(79, 70, 229, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.8);
+}
+
+.light .glass-card-hover:hover {
+  border-color: rgba(79, 70, 229, 0.25);
+  box-shadow:
+    0 0 0 1px rgba(79, 70, 229, 0.12),
+    0 8px 32px rgba(79, 70, 229, 0.12),
+    inset 0 1px 0 rgba(255, 255, 255, 0.9);
+}
+
+.light ::-webkit-scrollbar-track {
+  background: rgba(241, 245, 249, 0.8);
+}
+
+.light ::-webkit-scrollbar-thumb {
+  background: rgba(79, 70, 229, 0.2);
+}
+
+.light ::-webkit-scrollbar-thumb:hover {
+  background: rgba(79, 70, 229, 0.4);
+}
+
+/* ═══════════════════════════════════════════
+   THEME: GREEN (Dark Forest + Gold)
+   Bloomberg terminal meets emerald forest
+   ═══════════════════════════════════════════ */
+.green {
+  --background: #061a0a;
+  --foreground: #d1fae5;
+  --card: rgba(10, 30, 14, 0.85);
+  --card-foreground: #d1fae5;
+  --popover: rgba(10, 30, 14, 0.95);
+  --popover-foreground: #d1fae5;
+  --primary: #c9a84c;
+  --primary-foreground: #061a0a;
+  --primary-electric: #f0c060;
+  --primary-dim: #8a6d2f;
+  --secondary: #0d2b12;
+  --secondary-foreground: #d1fae5;
+  --muted: #0d2b12;
+  --muted-foreground: #6ee7b7;
+  --accent: #c9a84c;
+  --accent-foreground: #061a0a;
+  --destructive: #f87171;
+  --destructive-foreground: #061a0a;
+  --success: #34d399;
+  --success-foreground: #061a0a;
+  --warning: #f0c060;
+  --warning-foreground: #061a0a;
+  --border: rgba(52, 211, 153, 0.12);
+  --input: rgba(52, 211, 153, 0.12);
+  --ring: #34d399;
+  --gold-light: #e8d5a0;
+  --sidebar: rgba(6, 20, 10, 0.97);
+  --sidebar-foreground: #d1fae5;
+  --sidebar-primary: #c9a84c;
+  --sidebar-primary-foreground: #061a0a;
+  --sidebar-accent: rgba(52, 211, 153, 0.06);
+  --sidebar-accent-foreground: #d1fae5;
+  --sidebar-border: rgba(52, 211, 153, 0.1);
+  --sidebar-ring: #34d399;
+}
+
+.green .glass-card {
+  background: rgba(10, 30, 14, 0.75);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(52, 211, 153, 0.1);
+  box-shadow:
+    0 0 0 1px rgba(52, 211, 153, 0.06),
+    0 20px 60px rgba(0, 0, 0, 0.5),
+    inset 0 1px 0 rgba(52, 211, 153, 0.08);
+}
+
+.green .glass-card-hover:hover {
+  border-color: rgba(52, 211, 153, 0.2);
+  box-shadow:
+    0 0 0 1px rgba(52, 211, 153, 0.12),
+    0 30px 80px rgba(0, 0, 0, 0.6),
+    0 0 40px rgba(52, 211, 153, 0.06),
+    inset 0 1px 0 rgba(52, 211, 153, 0.12);
+}
+
+.green .dot-grid {
+  background-image: radial-gradient(rgba(52, 211, 153, 0.12) 1px, transparent 1px);
+  background-size: 40px 40px;
+}
+
+.green ::-webkit-scrollbar-track {
+  background: rgba(6, 20, 10, 0.5);
+}
+
+.green ::-webkit-scrollbar-thumb {
+  background: rgba(52, 211, 153, 0.15);
+}
+
+.green ::-webkit-scrollbar-thumb:hover {
+  background: rgba(52, 211, 153, 0.3);
+}

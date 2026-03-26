@@ -5,6 +5,7 @@ import Image from 'next/image'
 import { usePathname, useRouter } from 'next/navigation'
 import { Home, MessageSquare, Upload, FolderOpen, LogOut, FlaskConical, Info } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
+import { useTheme } from 'next-themes'
 import { useAuth } from '@/lib/auth-context'
 import useSWR from 'swr'
 import { getDocuments, Document, isDemoMode, exitDemoMode } from '@/lib/api'
@@ -79,6 +80,41 @@ function SidebarTooltip({ title, description, tech, children }: SidebarTooltipPr
           </motion.div>
         )}
       </AnimatePresence>
+    </div>
+  )
+}
+
+// ── THEME TOGGLE ──
+const themes = [
+  { key: 'dark',  label: 'Obsidian', color: '#c9a84c', bg: '#0a0805' },
+  { key: 'light', label: 'Light',    color: '#4f46e5', bg: '#ffffff' },
+  { key: 'green', label: 'Forest',   color: '#34d399', bg: '#061a0a' },
+]
+
+function ThemeToggle() {
+  const { theme, setTheme } = useTheme()
+
+  return (
+    <div className="flex items-center gap-2 px-1">
+      <span className="text-[9px] font-bold uppercase tracking-[0.15em] text-muted-foreground/40 flex-1">
+        Theme
+      </span>
+      <div className="flex items-center gap-1.5">
+        {themes.map((t) => (
+          <button
+            key={t.key}
+            onClick={() => setTheme(t.key)}
+            title={t.label}
+            className={cn(
+              'w-5 h-5 rounded-full border-2 transition-all duration-200',
+              theme === t.key
+                ? 'border-foreground/60 scale-110'
+                : 'border-transparent opacity-50 hover:opacity-80 hover:scale-105'
+            )}
+            style={{ background: t.bg, boxShadow: `0 0 0 1px ${t.color}40` }}
+          />
+        ))}
+      </div>
     </div>
   )
 }
@@ -278,6 +314,12 @@ export function AppSidebar({ onNavigate }: AppSidebarProps) {
 
       {/* User / Exit Demo Section */}
       <div className="p-4 border-t border-sidebar-border/50 space-y-3">
+
+        {/* Theme Toggle — always visible */}
+        <ThemeToggle />
+
+        <div className="h-px bg-sidebar-border/30" />
+
         {!demo && (
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center text-primary font-bold text-sm">
