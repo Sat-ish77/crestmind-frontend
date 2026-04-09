@@ -213,62 +213,32 @@
    CONFIDENCE BADGES
    ═══════════════════════════════════════════ */
 @keyframes confidence-pulse-high {
-  0%, 100% {
-    box-shadow: 0 0 10px rgba(74, 222, 128, 0.2);
-  }
-  50% {
-    box-shadow: 0 0 20px rgba(74, 222, 128, 0.3);
-  }
+  0%, 100% { box-shadow: 0 0 10px rgba(74, 222, 128, 0.2); }
+  50%       { box-shadow: 0 0 20px rgba(74, 222, 128, 0.3); }
 }
-
 @keyframes confidence-pulse-medium {
-  0%, 100% {
-    box-shadow: 0 0 10px rgba(240, 192, 96, 0.2);
-  }
-  50% {
-    box-shadow: 0 0 20px rgba(240, 192, 96, 0.3);
-  }
+  0%, 100% { box-shadow: 0 0 10px rgba(240, 192, 96, 0.2); }
+  50%       { box-shadow: 0 0 20px rgba(240, 192, 96, 0.3); }
 }
-
 @keyframes confidence-pulse-low {
-  0%, 100% {
-    box-shadow: 0 0 10px rgba(248, 113, 113, 0.2);
-  }
-  50% {
-    box-shadow: 0 0 20px rgba(248, 113, 113, 0.3);
-  }
+  0%, 100% { box-shadow: 0 0 10px rgba(248, 113, 113, 0.2); }
+  50%       { box-shadow: 0 0 20px rgba(248, 113, 113, 0.3); }
 }
 
-.confidence-high {
-  animation: confidence-pulse-high 2s ease-in-out infinite;
-}
-
-.confidence-medium {
-  animation: confidence-pulse-medium 2s ease-in-out infinite;
-}
-
-.confidence-low {
-  animation: confidence-pulse-low 2s ease-in-out infinite;
-}
+.confidence-high   { animation: confidence-pulse-high   2s ease-in-out infinite; }
+.confidence-medium { animation: confidence-pulse-medium 2s ease-in-out infinite; }
+.confidence-low    { animation: confidence-pulse-low    2s ease-in-out infinite; }
 
 /* ═══════════════════════════════════════════
    ANIMATED BORDER
    ═══════════════════════════════════════════ */
 @keyframes border-travel {
-  0% {
-    background-position: 0% 50%;
-  }
-  50% {
-    background-position: 100% 50%;
-  }
-  100% {
-    background-position: 0% 50%;
-  }
+  0%   { background-position: 0% 50%; }
+  50%  { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
 }
 
-.animated-border {
-  position: relative;
-}
+.animated-border { position: relative; }
 
 .animated-border::before {
   content: '';
@@ -278,12 +248,8 @@
   border-radius: inherit;
   background: linear-gradient(90deg, transparent, rgba(201, 168, 76, 0.4), transparent);
   background-size: 200% 200%;
-  -webkit-mask: 
-    linear-gradient(#fff 0 0) content-box, 
-    linear-gradient(#fff 0 0);
-  mask: 
-    linear-gradient(#fff 0 0) content-box, 
-    linear-gradient(#fff 0 0);
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
   -webkit-mask-composite: xor;
   mask-composite: exclude;
   animation: border-travel 3s linear infinite;
@@ -291,24 +257,18 @@
   transition: opacity 0.3s ease;
 }
 
-.animated-border:hover::before {
-  opacity: 1;
-}
+.animated-border:hover::before { opacity: 1; }
 
 /* ═══════════════════════════════════════════
    MARCHING ANTS (for dropzone)
    ═══════════════════════════════════════════ */
 @keyframes marching-ants {
-  0% {
-    background-position: 0 0, 100% 100%, 0 100%, 100% 0;
-  }
-  100% {
-    background-position: 20px 0, calc(100% - 20px) 100%, 0 calc(100% - 20px), 100% 20px;
-  }
+  0%   { background-position: 0 0, 100% 100%, 0 100%, 100% 0; }
+  100% { background-position: 20px 0, calc(100% - 20px) 100%, 0 calc(100% - 20px), 100% 20px; }
 }
 
 .marching-ants {
-  background-image: 
+  background-image:
     linear-gradient(90deg, var(--primary) 50%, transparent 50%),
     linear-gradient(90deg, var(--primary) 50%, transparent 50%),
     linear-gradient(0deg, var(--primary) 50%, transparent 50%),
@@ -323,21 +283,12 @@
    PROGRESS SHIMMER
    ═══════════════════════════════════════════ */
 @keyframes progress-shimmer {
-  0% {
-    background-position: -200% 0;
-  }
-  100% {
-    background-position: 200% 0;
-  }
+  0%   { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
 }
 
 .progress-shimmer {
-  background: linear-gradient(
-    90deg,
-    transparent,
-    rgba(201, 168, 76, 0.3),
-    transparent
-  );
+  background: linear-gradient(90deg, transparent, rgba(201, 168, 76, 0.3), transparent);
   background-size: 200% 100%;
   animation: progress-shimmer 1.5s ease-in-out infinite;
 }
@@ -345,38 +296,21 @@
 /* ═══════════════════════════════════════════
    BUTTON EFFECTS
    ═══════════════════════════════════════════ */
-.button-press {
-  transition: transform 100ms ease;
-}
-
-.button-press:active {
-  transform: scale(0.97);
-}
+.button-press { transition: transform 100ms ease; }
+.button-press:active { transform: scale(0.97); }
 
 @keyframes shimmer-sweep {
-  0% {
-    background-position: -200% 0;
-  }
-  100% {
-    background-position: 200% 0;
-  }
+  0%   { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
 }
 
-.button-shimmer {
-  position: relative;
-  overflow: hidden;
-}
+.button-shimmer { position: relative; overflow: hidden; }
 
 .button-shimmer::before {
   content: '';
   position: absolute;
   inset: 0;
-  background: linear-gradient(
-    90deg,
-    transparent 0%,
-    rgba(255, 255, 255, 0.2) 50%,
-    transparent 100%
-  );
+  background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.2) 50%, transparent 100%);
   background-size: 200% 100%;
   opacity: 0;
   transition: opacity 0.3s ease;
@@ -397,8 +331,8 @@
   pointer-events: none;
   background: repeating-linear-gradient(
     0deg,
-    rgba(0, 0, 0, 0.02) 0px,
-    rgba(0, 0, 0, 0.02) 1px,
+    rgba(0,0,0,0.02) 0px,
+    rgba(0,0,0,0.02) 1px,
     transparent 1px,
     transparent 2px
   );
@@ -422,12 +356,8 @@
    ANIMATED DOT GRID
    ═══════════════════════════════════════════ */
 @keyframes dot-pulse {
-  0%, 100% {
-    opacity: 0.03;
-  }
-  50% {
-    opacity: 0.08;
-  }
+  0%, 100% { opacity: 0.03; }
+  50%       { opacity: 0.08; }
 }
 
 .dot-grid {
@@ -439,9 +369,7 @@
 /* ═══════════════════════════════════════════
    SIDEBAR EFFECTS
    ═══════════════════════════════════════════ */
-.nav-active {
-  position: relative;
-}
+.nav-active { position: relative; }
 
 .nav-active::before {
   content: '';
@@ -457,77 +385,29 @@
 }
 
 @keyframes logo-breathe {
-  0%, 100% {
-    transform: scale(1);
-  }
-  50% {
-    transform: scale(1.02);
-  }
+  0%, 100% { transform: scale(1); }
+  50%       { transform: scale(1.02); }
 }
 
-.logo-breathe {
-  animation: logo-breathe 4s ease-in-out infinite;
-}
+.logo-breathe { animation: logo-breathe 4s ease-in-out infinite; }
 
 /* ═══════════════════════════════════════════
    SCROLLBAR
    ═══════════════════════════════════════════ */
-::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
-}
-
-::-webkit-scrollbar-track {
-  background: rgba(10, 8, 5, 0.5);
-}
-
-::-webkit-scrollbar-thumb {
-  background: rgba(201, 168, 76, 0.2);
-  border-radius: 3px;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: rgba(201, 168, 76, 0.4);
-}
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: rgba(10, 8, 5, 0.5); }
+::-webkit-scrollbar-thumb { background: rgba(201, 168, 76, 0.2); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(201, 168, 76, 0.4); }
 
 /* ═══════════════════════════════════════════
    DOCUMENT TYPE BADGES
    ═══════════════════════════════════════════ */
-.badge-lease {
-  background: rgba(59, 130, 246, 0.15);
-  color: #60a5fa;
-  box-shadow: 0 0 10px rgba(59, 130, 246, 0.1);
-}
-
-.badge-amendment {
-  background: rgba(168, 85, 247, 0.15);
-  color: #c084fc;
-  box-shadow: 0 0 10px rgba(168, 85, 247, 0.1);
-}
-
-.badge-invoice {
-  background: rgba(201, 168, 76, 0.15);
-  color: #c9a84c;
-  box-shadow: 0 0 10px rgba(201, 168, 76, 0.1);
-}
-
-.badge-inspection {
-  background: rgba(251, 146, 60, 0.15);
-  color: #fb923c;
-  box-shadow: 0 0 10px rgba(251, 146, 60, 0.1);
-}
-
-.badge-quote {
-  background: rgba(45, 212, 191, 0.15);
-  color: #2dd4bf;
-  box-shadow: 0 0 10px rgba(45, 212, 191, 0.1);
-}
-
-.badge-work_order {
-  background: rgba(244, 114, 182, 0.15);
-  color: #f472b6;
-  box-shadow: 0 0 10px rgba(244, 114, 182, 0.1);
-}
+.badge-lease      { background: rgba(59, 130, 246, 0.15); color: #60a5fa; box-shadow: 0 0 10px rgba(59, 130, 246, 0.1); }
+.badge-amendment  { background: rgba(168, 85, 247, 0.15); color: #c084fc; box-shadow: 0 0 10px rgba(168, 85, 247, 0.1); }
+.badge-invoice    { background: rgba(201, 168, 76, 0.15); color: #c9a84c; box-shadow: 0 0 10px rgba(201, 168, 76, 0.1); }
+.badge-inspection { background: rgba(251, 146, 60, 0.15); color: #fb923c; box-shadow: 0 0 10px rgba(251, 146, 60, 0.1); }
+.badge-quote      { background: rgba(45, 212, 191, 0.15); color: #2dd4bf; box-shadow: 0 0 10px rgba(45, 212, 191, 0.1); }
+.badge-work_order { background: rgba(244, 114, 182, 0.15); color: #f472b6; box-shadow: 0 0 10px rgba(244, 114, 182, 0.1); }
 
 /* ═══════════════════════════════════════════
    PARTICLE CANVAS STYLES
@@ -543,12 +423,8 @@
    TYPEWRITER CURSOR
    ═══════════════════════════════════════════ */
 @keyframes blink {
-  0%, 100% {
-    opacity: 1;
-  }
-  50% {
-    opacity: 0;
-  }
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0; }
 }
 
 .typewriter-cursor::after {
@@ -562,12 +438,8 @@
    TERMINAL CURSOR (for chunks)
    ═══════════════════════════════════════════ */
 @keyframes terminal-blink {
-  0%, 100% {
-    opacity: 1;
-  }
-  50% {
-    opacity: 0;
-  }
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0; }
 }
 
 .terminal-cursor::after {
@@ -580,46 +452,110 @@
    SHAKE ANIMATION (for errors)
    ═══════════════════════════════════════════ */
 @keyframes shake {
-  0%, 100% {
-    transform: translateX(0);
-  }
-  10%, 30%, 50%, 70%, 90% {
-    transform: translateX(-4px);
-  }
-  20%, 40%, 60%, 80% {
-    transform: translateX(4px);
-  }
+  0%, 100%                         { transform: translateX(0); }
+  10%, 30%, 50%, 70%, 90%         { transform: translateX(-4px); }
+  20%, 40%, 60%, 80%              { transform: translateX(4px); }
 }
 
-.shake {
-  animation: shake 0.5s cubic-bezier(0.36, 0.07, 0.19, 0.97);
-}
+.shake { animation: shake 0.5s cubic-bezier(0.36, 0.07, 0.19, 0.97); }
 
 /* ═══════════════════════════════════════════
    FLOAT UP ANIMATION
    ═══════════════════════════════════════════ */
 @keyframes float-up {
-  0% {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
-  100% {
-    opacity: 0;
-    transform: translateY(-50px) scale(0.5);
-  }
+  0%   { opacity: 1; transform: translateY(0) scale(1); }
+  100% { opacity: 0; transform: translateY(-50px) scale(0.5); }
 }
 
-.float-up {
-  animation: float-up 0.8s ease-out forwards;
+.float-up { animation: float-up 0.8s ease-out forwards; }
+
+/* ═══════════════════════════════════════════
+   3D SHAPE PERSPECTIVE
+   ═══════════════════════════════════════════ */
+.perspective-container {
+  perspective: 800px;
+  transform-style: preserve-3d;
+}
+
+/* ═══════════════════════════════════════════
+   LOGIN SPLIT LAYOUT
+   ═══════════════════════════════════════════ */
+/* Tints toward current theme (--background) so split seam matches light/green/dark */
+.login-building-overlay {
+  background: linear-gradient(
+    to right,
+    color-mix(in srgb, color-mix(in srgb, var(--background) 38%, #000000 62%) 78%, transparent),
+    color-mix(in srgb, color-mix(in srgb, var(--background) 32%, #000000 68%) 58%, transparent),
+    color-mix(in srgb, color-mix(in srgb, var(--background) 42%, #000000 58%) 82%, transparent)
+  );
+}
+
+/* Light theme: indigo/slate tint — keeps building color; avoids a white “wash” */
+.light .login-building-overlay {
+  background: linear-gradient(
+    to right,
+    rgba(15, 23, 42, 0.5),
+    rgba(30, 27, 75, 0.36),
+    rgba(30, 41, 59, 0.44)
+  );
+}
+
+/* Softer seam into the login column (default: theme background) */
+.login-building-seam {
+  width: 8rem;
+  background: linear-gradient(
+    to left,
+    color-mix(in srgb, var(--background) 60%, transparent),
+    transparent
+  );
+}
+
+.light .login-building-seam {
+  width: 11rem;
+  background: linear-gradient(
+    to left,
+    rgba(30, 27, 75, 0.1) 0%,
+    rgba(241, 245, 249, 0.55) 42%,
+    transparent 100%
+  );
+}
+
+/* Login right column: off-white panel so glass card reads against something */
+.light .login-form-panel {
+  background-color: var(--muted);
+}
+
+/* Frosted card vs flat white — scoped to login only */
+.light .login-form-panel .glass-card {
+  background: rgba(255, 255, 255, 0.76);
+  border: 1px solid rgba(79, 70, 229, 0.16);
+  box-shadow:
+    0 0 0 1px rgba(79, 70, 229, 0.05),
+    0 8px 32px rgba(30, 27, 75, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.65);
+}
+
+/* ═══════════════════════════════════════════
+   DEMO TOOLTIP — always readable regardless of theme
+   The tooltip card always has a dark background.
+   Force text colors to cream/gold so they're readable
+   in light and green themes where CSS vars would be wrong.
+   ═══════════════════════════════════════════ */
+.demo-tooltip-inner .tooltip-title {
+  color: rgba(201, 168, 76, 0.75) !important;
+}
+.demo-tooltip-inner .tooltip-body {
+  color: rgba(240, 234, 216, 0.85) !important;
+}
+.demo-tooltip-inner .tooltip-tech {
+  color: rgba(201, 168, 76, 0.5) !important;
 }
 
 /* ═══════════════════════════════════════════
    REDUCED MOTION
    ═══════════════════════════════════════════ */
 @media (prefers-reduced-motion: reduce) {
-  *,
-  *::before,
-  *::after {
+  *, *::before, *::after {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
@@ -628,7 +564,6 @@
 
 /* ═══════════════════════════════════════════
    THEME: LIGHT (White + Indigo)
-   Clean professional — Linear/Notion style
    ═══════════════════════════════════════════ */
 .light {
   --background: #ffffff;
@@ -661,13 +596,12 @@
   --sidebar-foreground: #1e1b4b;
   --sidebar-primary: #4f46e5;
   --sidebar-primary-foreground: #ffffff;
-  --sidebar-accent: rgba(79, 70, 229, 0.06);
+  --sidebar-accent: rgba(79, 70, 229, 0.08);
   --sidebar-accent-foreground: #1e1b4b;
   --sidebar-border: rgba(79, 70, 229, 0.1);
   --sidebar-ring: #4f46e5;
 }
 
-/* Override glass cards for light theme */
 .light .glass-card {
   background: rgba(255, 255, 255, 0.85);
   backdrop-filter: blur(20px);
@@ -687,21 +621,14 @@
     inset 0 1px 0 rgba(255, 255, 255, 0.9);
 }
 
-.light ::-webkit-scrollbar-track {
-  background: rgba(241, 245, 249, 0.8);
-}
-
-.light ::-webkit-scrollbar-thumb {
-  background: rgba(79, 70, 229, 0.2);
-}
-
-.light ::-webkit-scrollbar-thumb:hover {
-  background: rgba(79, 70, 229, 0.4);
-}
+.light ::-webkit-scrollbar-track { background: rgba(241, 245, 249, 0.8); }
+.light ::-webkit-scrollbar-thumb { background: rgba(79, 70, 229, 0.2); }
+.light ::-webkit-scrollbar-thumb:hover { background: rgba(79, 70, 229, 0.4); }
 
 /* ═══════════════════════════════════════════
    THEME: GREEN (Dark Forest + Gold)
-   Bloomberg terminal meets emerald forest
+   FIX: sidebar hover uses gold, not emerald
+   FIX: muted text is readable on dark green bg
    ═══════════════════════════════════════════ */
 .green {
   --background: #061a0a;
@@ -717,7 +644,7 @@
   --secondary: #0d2b12;
   --secondary-foreground: #d1fae5;
   --muted: #0d2b12;
-  --muted-foreground: #6ee7b7;
+  --muted-foreground: #86efac; /* softer green — was too bright */
   --accent: #c9a84c;
   --accent-foreground: #061a0a;
   --destructive: #f87171;
@@ -726,53 +653,47 @@
   --success-foreground: #061a0a;
   --warning: #f0c060;
   --warning-foreground: #061a0a;
-  --border: rgba(52, 211, 153, 0.12);
-  --input: rgba(52, 211, 153, 0.12);
-  --ring: #34d399;
+  --border: rgba(201, 168, 76, 0.15); /* gold border, not green */
+  --input: rgba(201, 168, 76, 0.12);
+  --ring: #c9a84c;
   --gold-light: #e8d5a0;
-  --sidebar: rgba(6, 20, 10, 0.97);
+  --sidebar: rgba(8, 14, 11, 0.97);
   --sidebar-foreground: #d1fae5;
   --sidebar-primary: #c9a84c;
   --sidebar-primary-foreground: #061a0a;
-  --sidebar-accent: rgba(52, 211, 153, 0.06);
+  /* ── KEY FIX: gold hover instead of green-on-green ── */
+  --sidebar-accent: rgba(201, 168, 76, 0.08);
   --sidebar-accent-foreground: #d1fae5;
-  --sidebar-border: rgba(52, 211, 153, 0.1);
-  --sidebar-ring: #34d399;
+  --sidebar-border: rgba(201, 168, 76, 0.12);
+  --sidebar-ring: #c9a84c;
 }
 
 .green .glass-card {
-  background: rgba(10, 30, 14, 0.75);
+  background: rgba(12, 20, 16, 0.78);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
-  border: 1px solid rgba(52, 211, 153, 0.1);
+  border: 1px solid rgba(201, 168, 76, 0.12); /* gold border */
   box-shadow:
-    0 0 0 1px rgba(52, 211, 153, 0.06),
-    0 20px 60px rgba(0, 0, 0, 0.5),
-    inset 0 1px 0 rgba(52, 211, 153, 0.08);
+    0 0 0 1px rgba(201, 168, 76, 0.06),
+    0 20px 60px rgba(0, 0, 0, 0.6),
+    inset 0 1px 0 rgba(201, 168, 76, 0.06);
 }
 
 .green .glass-card-hover:hover {
-  border-color: rgba(52, 211, 153, 0.2);
+  border-color: rgba(201, 168, 76, 0.22);
   box-shadow:
-    0 0 0 1px rgba(52, 211, 153, 0.12),
-    0 30px 80px rgba(0, 0, 0, 0.6),
-    0 0 40px rgba(52, 211, 153, 0.06),
-    inset 0 1px 0 rgba(52, 211, 153, 0.12);
+    0 0 0 1px rgba(201, 168, 76, 0.1),
+    0 30px 80px rgba(0, 0, 0, 0.7),
+    0 0 30px rgba(201, 168, 76, 0.05),
+    inset 0 1px 0 rgba(201, 168, 76, 0.08);
 }
 
+/* Dot grid uses subtle gold tint in green theme */
 .green .dot-grid {
-  background-image: radial-gradient(rgba(52, 211, 153, 0.12) 1px, transparent 1px);
+  background-image: radial-gradient(rgba(201, 168, 76, 0.1) 1px, transparent 1px);
   background-size: 40px 40px;
 }
 
-.green ::-webkit-scrollbar-track {
-  background: rgba(6, 20, 10, 0.5);
-}
-
-.green ::-webkit-scrollbar-thumb {
-  background: rgba(52, 211, 153, 0.15);
-}
-
-.green ::-webkit-scrollbar-thumb:hover {
-  background: rgba(52, 211, 153, 0.3);
-}
+.green ::-webkit-scrollbar-track { background: rgba(8, 14, 11, 0.6); }
+.green ::-webkit-scrollbar-thumb { background: rgba(201, 168, 76, 0.15); }
+.green ::-webkit-scrollbar-thumb:hover { background: rgba(201, 168, 76, 0.3); }

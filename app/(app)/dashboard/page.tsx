@@ -66,7 +66,7 @@ function DemoTooltip({ title, description, tech, children, position = 'top' }: T
             transition={{ duration: 0.15 }}
           >
             <div
-              className="rounded-xl p-3 border"
+              className="demo-tooltip-inner rounded-xl p-3 border"
               style={{
                 background: 'rgba(14,12,10,0.95)',
                 backdropFilter: 'blur(20px)',
@@ -74,14 +74,14 @@ function DemoTooltip({ title, description, tech, children, position = 'top' }: T
                 boxShadow: '0 0 0 1px rgba(201,168,76,0.08), 0 20px 40px rgba(0,0,0,0.6)',
               }}
             >
-              <p className="text-[9px] font-bold uppercase tracking-[0.2em] text-primary/70 mb-1">
+              <p className="tooltip-title text-[9px] font-bold uppercase tracking-[0.2em] mb-1">
                 {title}
               </p>
-              <p className="text-xs text-foreground/80 leading-relaxed mb-1.5">
+              <p className="tooltip-body text-xs leading-relaxed mb-1.5">
                 {description}
               </p>
               {tech && (
-                <p className="text-[10px] font-mono text-primary/50">
+                <p className="tooltip-tech text-[10px] font-mono">
                   ⚙ {tech}
                 </p>
               )}
