@@ -23,6 +23,7 @@ export interface AskResponse {
   found_in_documents: boolean
   overall_confidence: 'high' | 'medium' | 'low'
   sources: Source[]
+  steps: string[]   // agent reasoning trace
 }
 
 export interface AskRequest {
@@ -107,6 +108,7 @@ const DEMO_RESPONSES: { keywords: string[]; response: AskResponse }[] = [
             'Tenant shall have two (2) options to renew this Lease for additional periods of five (5) years each, upon written notice no later than twelve (12) months prior to expiration of the then-current term.',
         },
       ],
+      steps: [],
     },
   },
   {
@@ -126,6 +128,7 @@ const DEMO_RESPONSES: { keywords: string[]; response: AskResponse }[] = [
             'Total invoice amount: $3,850.93. Scope of work includes complete ductwork replacement, insulation removal, and system testing per Woodcrest Capital maintenance standards.',
         },
       ],
+      steps: [],
     },
   },
   {
@@ -145,6 +148,7 @@ const DEMO_RESPONSES: { keywords: string[]; response: AskResponse }[] = [
             'Base Rent shall be Forty-Two Thousand Dollars ($42,000) per annum, payable in equal monthly installments of Three Thousand Five Hundred Dollars ($3,500) on the first day of each month.',
         },
       ],
+      steps: [],
     },
   },
   {
@@ -164,6 +168,7 @@ const DEMO_RESPONSES: { keywords: string[]; response: AskResponse }[] = [
             'This First Amendment to Lease Agreement is effective as of January 1, 2015, and modifies the original Lease dated 2010 between Woodcrest Capital LLC (Landlord) and Ollie\'s Bargain Outlet (Tenant).',
         },
       ],
+      steps: [],
     },
   },
 ]
@@ -183,6 +188,7 @@ const DEFAULT_DEMO_RESPONSE: AskResponse = {
         'This Lease Agreement is entered into between Woodcrest Capital LLC as Landlord and Ollie\'s Bargain Outlet Inc. as Tenant for the premises located within the Woodcrest shopping center portfolio.',
     },
   ],
+  steps: [],
 }
 
 const getDemoResponse = (query: string): AskResponse => {
@@ -201,7 +207,7 @@ const getDemoResponse = (query: string): AskResponse => {
 
 export async function askQuestion(request: AskRequest): Promise<AskResponse> {
   if (isDemoMode()) {
-    await sleep(2000) // realistic loading delay
+    await sleep(2000)
     return getDemoResponse(request.query)
   }
   const response = await api.post<AskResponse>('/ask', request)
