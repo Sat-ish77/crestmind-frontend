@@ -9,6 +9,7 @@ import useSWR from 'swr'
 import { getDocuments, isDemoMode } from '@/lib/api'
 import { Spinner } from '@/components/ui/spinner'
 import { cn } from '@/lib/utils'
+import { formatCreatedAtRelative, createdAtToMs } from '@/lib/format-created-at'
 
 // ── DEMO STATIC DATA ──
 const DEMO_STATS = { documents: 5, chunks: 113, queries: 47 }
@@ -173,20 +174,20 @@ const featureCards = [
     },
   },
   {
-    title: 'Ingest Documents',
+    title: 'Upload Documents',
     description: 'Upload and process new documents to expand your knowledge base with automatic chunking and embedding.',
     icon: FillingDocumentIcon,
     href: '/ingest',
     gradient: 'from-success/20 to-success/5',
     tooltip: {
-      title: 'DOCUMENT INGESTION',
+      title: 'DOCUMENT UPLOAD',
       description: 'Upload PDFs or DOCX files. They get parsed, split into semantic chunks, embedded as vectors, and stored for retrieval.',
       tech: 'PyMuPDF + OpenAI Embeddings + Supabase',
     },
   },
   {
     title: 'Explore Knowledge',
-    description: 'Browse your entire document library, search across all ingested materials, and manage your data.',
+    description: 'Browse your entire document library, search across all uploaded materials, and manage your data.',
     icon: AssemblingGridIcon,
     href: '/ingest',
     gradient: 'from-gold-light/20 to-gold-light/5',
@@ -198,6 +199,8 @@ const featureCards = [
   },
 ]
 
+const EASE_OUT: [number, number, number, number] = [0.4, 0, 0.2, 1]
+
 const containerVariants = {
   hidden: { opacity: 0 },
   visible: { opacity: 1, transition: { staggerChildren: 0.1 } },
@@ -205,7 +208,7 @@ const containerVariants = {
 
 const itemVariants = {
   hidden: { opacity: 0, y: 20 },
-  visible: { opacity: 1, y: 0, transition: { duration: 0.5, ease: [0.4, 0, 0.2, 1] } },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.5, ease: EASE_OUT } },
 }
 
 function StatPlaceholder() {
@@ -240,23 +243,9 @@ export default function DashboardPage() {
   const totalChunks = demo ? DEMO_STATS.chunks    : documents.reduce((acc, doc) => acc + doc.chunks, 0)
 
   // ── FIXED: spread to avoid mutation, dynamic timeAgo ──
-  const lastIngestion = documents.length > 0
-    ? [...documents].sort((a, b) =>
-        new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-      )[0]
+  const lastUpload = documents.length > 0
+    ? [...documents].sort((a, b) => createdAtToMs(b.created_at) - createdAtToMs(a.created_at))[0]
     : null
-
-  const formatTimeAgo = (dateString: string) => {
-    const normalized = dateString.endsWith('Z') ? dateString : dateString + 'Z'
-    const diffMs    = Date.now() - new Date(normalized).getTime()
-    const diffMins  = Math.floor(diffMs / 60000)
-    const diffHours = Math.floor(diffMs / 3600000)
-    const diffDays  = Math.floor(diffMs / 86400000)
-    if (diffDays > 0)  return `${diffDays}d ago`
-    if (diffHours > 0) return `${diffHours}h ago`
-    if (diffMins > 0)  return `${diffMins}m ago`
-    return 'Just now'
-  }
 
   useEffect(() => {
     const name = demo ? 'Demo User' : (user?.username || 'User')
@@ -343,7 +332,7 @@ export default function DashboardPage() {
                   <FileText className="w-5 h-5 text-primary" />
                 </div>
                 <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-[0.15em]">
-                  Documents Ingested
+                  Documents Uploaded
                 </p>
               </div>
               {showLoading ? <StatPlaceholder /> : (
@@ -383,12 +372,12 @@ export default function DashboardPage() {
             </motion.div>
           </DemoTooltip>
 
-          {/* Queries / Last Ingestion */}
+          {/* Queries / Last Upload */}
           <DemoTooltip
             title={demo ? 'RAG PIPELINE' : 'LAST INGESTION'}
             description={demo
               ? 'Every query runs vector similarity search + BM25 keyword search simultaneously, merges results with RRF, then sends top chunks to GPT-4o-mini for a grounded answer.'
-              : 'Time since the last document was ingested into the vector database.'
+              : 'Time since the last document was uploaded into the vector database.'
             }
             tech={demo ? 'pgvector + tsvector + RRF + GPT-4o-mini' : 'Supabase PostgreSQL'}
             position="bottom"
@@ -404,7 +393,7 @@ export default function DashboardPage() {
                   <Clock className="w-5 h-5 text-primary" />
                 </div>
                 <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-[0.15em]">
-                  {demo ? 'Queries Run' : 'Last Ingestion'}
+                  {demo ? 'Queries Run' : 'Last Upload'}
                 </p>
               </div>
               {showLoading ? <StatPlaceholder /> : demo ? (
@@ -413,7 +402,7 @@ export default function DashboardPage() {
                 </p>
               ) : (
                 <p className="text-5xl font-serif text-primary">
-                  {lastIngestion ? formatTimeAgo(lastIngestion.created_at) : '—'}
+                  {lastUpload ? formatCreatedAtRelative(lastUpload.created_at) : '—'}
                 </p>
               )}
             </motion.div>
@@ -518,7 +507,7 @@ export default function DashboardPage() {
             </div>
             <div className="space-y-3">
               {[...documents]
-                .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+                .sort((a, b) => createdAtToMs(b.created_at) - createdAtToMs(a.created_at))
                 .slice(0, 3)
                 .map((doc, index) => (
                   <motion.div
@@ -534,7 +523,7 @@ export default function DashboardPage() {
                     </div>
                     <div className="flex items-center gap-4 text-xs text-muted-foreground">
                       <span>{doc.chunks} chunks</span>
-                      <span className="text-primary/60">{formatTimeAgo(doc.created_at)}</span>
+                      <span className="text-primary/60">{formatCreatedAtRelative(doc.created_at)}</span>
                     </div>
                   </motion.div>
                 ))}

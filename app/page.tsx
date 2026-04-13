@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import Image from 'next/image'
 import { Eye, EyeOff, Lock, User, Sparkles } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
+import { useTheme } from 'next-themes'
 import { useAuth } from '@/lib/auth-context'
 import { AuthProvider } from '@/lib/auth-context'
 import { Spinner } from '@/components/ui/spinner'
@@ -264,8 +265,14 @@ function LoginForm() {
   const [isLoading, setIsLoading]   = useState(false)
   const [isShaking, setIsShaking]   = useState(false)
   const [isSuccess, setIsSuccess]   = useState(false)
+  const { setTheme } = useTheme()
   const { login, user, isLoading: authLoading } = useAuth()
   const router = useRouter()
+
+  // Always start sign-in on the white/purple theme (even if localStorage had another theme saved).
+  useEffect(() => {
+    setTheme('light')
+  }, [setTheme])
 
   useEffect(() => {
     if (!authLoading && user) router.push('/dashboard')

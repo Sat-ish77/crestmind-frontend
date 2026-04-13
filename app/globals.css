@@ -767,17 +767,4 @@
    THEME TOGGLE: crisp 50/50 split circle
    (Half white, half black) + 1px divider.
    ═══════════════════════════════════════════ */
-button[data-split-theme='true'] {
-  background: linear-gradient(90deg, #ffffff 0 50%, #0b0f14 50% 100%);
-}
-
-button[data-split-theme='true']::after {
-  content: '';
-  position: absolute;
-  top: 3px;
-  bottom: 3px;
-  left: 50%;
-  width: 1px;
-  transform: translateX(-0.5px);
-  background: rgba(15, 23, 42, 0.35);
-}
+/* Theme toggle split swatch is rendered with 2 solid spans (no gradients). */

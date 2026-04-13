@@ -118,14 +118,18 @@ function ThemeToggle() {
                 : 'border-transparent opacity-50 hover:opacity-80 hover:scale-105'
             )}
             style={{
-              background:
-                t.key === 'light'
-                  ? undefined
-                  : t.bg,
+              background: t.key === 'light' ? undefined : t.bg,
               boxShadow: `0 0 0 1px ${t.color}40`,
             }}
-            data-split-theme={t.key === 'light' ? 'true' : undefined}
-          />
+          >
+            {t.key === 'light' && (
+              <>
+                <span className="absolute inset-y-0 left-0 w-1/2 bg-white" />
+                <span className="absolute inset-y-0 right-0 w-1/2 bg-[#0b0f14]" />
+                <span className="absolute top-[3px] bottom-[3px] left-1/2 w-px -translate-x-1/2 bg-black/25" />
+              </>
+            )}
+          </button>
         ))}
       </div>
     </div>
@@ -155,7 +159,7 @@ const navItems = [
   },
   {
     href: '/ingest',
-    label: 'Ingest Document',
+    label: 'Upload Documents',
     icon: Upload,
     tooltip: {
       title: 'DOCUMENT PIPELINE',
@@ -297,7 +301,7 @@ export function AppSidebar({ onNavigate }: AppSidebarProps) {
           </SidebarTooltip>
           <div className="space-y-1 max-h-64 overflow-y-auto">
             {documents.length === 0 ? (
-              <p className="text-xs text-muted-foreground/40 px-3 italic">No documents ingested</p>
+              <p className="text-xs text-muted-foreground/40 px-3 italic">No documents uploaded</p>
             ) : (
               documents.slice(0, 10).map((doc: Document, index: number) => (
                 <motion.div

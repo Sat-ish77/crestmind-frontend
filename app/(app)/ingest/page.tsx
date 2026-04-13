@@ -8,6 +8,7 @@ import { Spinner } from '@/components/ui/spinner'
 import { toast } from 'sonner'
 import useSWR, { mutate } from 'swr'
 import { cn } from '@/lib/utils'
+import { formatCreatedAtRelative } from '@/lib/format-created-at'
 
 const docTypes = [
   { value: 'auto-detect', label: 'Auto-detect' },
@@ -194,19 +195,6 @@ export default function IngestPage() {
     doc.doc_name.toLowerCase().includes(searchQuery.toLowerCase())
   )
 
-  // Dynamic timestamp
-  const formatTimeAgo = (dateString: string) => {
-    const normalized = dateString.endsWith('Z') ? dateString : dateString + 'Z'
-    const diffMs    = Date.now() - new Date(normalized).getTime()
-    const diffMins  = Math.floor(diffMs / 60000)
-    const diffHours = Math.floor(diffMs / 3600000)
-    const diffDays  = Math.floor(diffMs / 86400000)
-    if (diffDays > 0)  return `${diffDays}d ago`
-    if (diffHours > 0) return `${diffHours}h ago`
-    if (diffMins > 0)  return `${diffMins}m ago`
-    return 'Just now'
-  }
-
   // Check if on mobile
   const [isMobile, setIsMobile] = useState(false)
   useEffect(() => {
@@ -264,15 +252,15 @@ export default function IngestPage() {
       setLastIngestResult({ docName: result.doc_name, chunks: result.chunks_stored })
       setShowConfetti(true)
       setTimeout(() => setShowConfetti(false), 1000)
-      toast.success(`Successfully ingested ${result.doc_name}`)
+      toast.success(`Successfully uploaded ${result.doc_name}`)
       setFile(null)
       setPropertyName('')
       setDocType('auto-detect')
       if (fileInputRef.current) fileInputRef.current.value = ''
       mutate('documents')
     } catch (error) {
-      console.error('Ingest error:', error)
-      toast.error('Failed to ingest document. Please check if the API is running.')
+      console.error('Upload error:', error)
+      toast.error('Failed to upload document. Please check if the API is running.')
     } finally {
       setIsIngesting(false)
       setCurrentStep(null)
@@ -313,7 +301,7 @@ export default function IngestPage() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
         >
-          <h1 className="text-3xl lg:text-4xl font-serif text-foreground">Ingest Document</h1>
+          <h1 className="text-3xl lg:text-4xl font-serif text-foreground">Upload Document</h1>
           <p className="text-muted-foreground/70 text-sm tracking-wide">
             Expand your knowledge base by uploading property documents
           </p>
@@ -329,10 +317,10 @@ export default function IngestPage() {
             <Lock className="w-5 h-5 text-primary/60 shrink-0" />
             <div>
               <p className="text-sm font-semibold text-primary">
-                ✦ Demo Mode — Document ingestion is disabled
+                ✦ Demo Mode — Document upload is disabled
               </p>
               <p className="text-xs text-muted-foreground/70 mt-0.5">
-                5 real Woodcrest Capital documents are pre-loaded below. Sign in with credentials to ingest your own documents.
+                5 real Woodcrest Capital documents are pre-loaded below. Sign in with credentials to upload your own documents.
               </p>
             </div>
           </motion.div>
@@ -487,7 +475,7 @@ export default function IngestPage() {
                 )}
               </AnimatePresence>
 
-              {/* Ingest Button - always enabled */}
+              {/* Upload Button - always enabled */}
               <motion.button
                 onClick={handleIngest}
                 disabled={isIngesting}
@@ -504,7 +492,7 @@ export default function IngestPage() {
                 ) : (
                   <>
                     <Upload className="w-5 h-5" />
-                    <span>Ingest Document</span>
+                    <span>Upload Document</span>
                   </>
                 )}
               </motion.button>
@@ -531,7 +519,7 @@ export default function IngestPage() {
                 <Check className="w-6 h-6 text-success" />
               </motion.div>
               <div>
-                <p className="font-bold text-success">Ingestion Complete</p>
+                <p className="font-bold text-success">Upload Complete</p>
                 <p className="text-sm text-success/70">
                   &quot;{lastIngestResult.docName}&quot; has been processed into {lastIngestResult.chunks} chunks.
                 </p>
@@ -581,7 +569,7 @@ export default function IngestPage() {
               <div className="flex flex-col items-center justify-center py-16 text-center">
                 <AlertCircle className="w-12 h-12 text-muted-foreground/20 mb-4" />
                 <p className="text-muted-foreground/60 text-sm">
-                  {searchQuery ? 'No documents match your search' : 'No documents ingested yet'}
+                  {searchQuery ? 'No documents match your search' : 'No documents uploaded yet'}
                 </p>
               </div>
             ) : (
@@ -592,7 +580,7 @@ export default function IngestPage() {
                       <th className="px-6 py-4 text-[10px] font-bold uppercase tracking-[0.15em] text-muted-foreground/60">Document Name</th>
                       <th className="px-6 py-4 text-[10px] font-bold uppercase tracking-[0.15em] text-muted-foreground/60">Type</th>
                       <th className="px-6 py-4 text-[10px] font-bold uppercase tracking-[0.15em] text-muted-foreground/60">Chunks</th>
-                      <th className="px-6 py-4 text-[10px] font-bold uppercase tracking-[0.15em] text-muted-foreground/60">Ingested</th>
+                      <th className="px-6 py-4 text-[10px] font-bold uppercase tracking-[0.15em] text-muted-foreground/60">Uploaded</th>
                       <th className="px-6 py-4 text-[10px] font-bold uppercase tracking-[0.15em] text-muted-foreground/60 text-right">Actions</th>
                     </tr>
                   </thead>
@@ -621,7 +609,7 @@ export default function IngestPage() {
                         </td>
                         <td className="px-6 py-4 text-muted-foreground/70 font-mono text-sm">{doc.chunks}</td>
                         <td className="px-6 py-4 text-muted-foreground/70 text-sm">
-                          {formatTimeAgo(doc.created_at)}
+                          {formatCreatedAtRelative(doc.created_at)}
                         </td>
                         <td className="px-6 py-4 text-right">
                           <motion.button
@@ -675,7 +663,7 @@ export default function IngestPage() {
                 whileTap={{ scale: 0.98 }}
               >
                 {isIngesting ? <Spinner className="w-4 h-4" /> : <Upload className="w-4 h-4" />}
-                <span>Ingest</span>
+                <span>Upload</span>
               </motion.button>
             </div>
           </motion.div>
