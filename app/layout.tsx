@@ -55,8 +55,8 @@ export default function RootLayout({
       <body className={`${dmSans.variable} ${dmSerif.variable} ${dmMono.variable} font-sans antialiased`}>
         <ThemeProvider
           attribute="class"
-          defaultTheme="dark"
-          themes={["dark", "light", "green"]}
+          defaultTheme="light"
+          themes={["dark", "light", "green", "midnight"]}
           storageKey="crestmind-theme"
           disableTransitionOnChange={false}
         >

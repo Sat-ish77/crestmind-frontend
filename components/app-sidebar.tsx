@@ -103,15 +103,28 @@ function ThemeToggle() {
         {themes.map((t) => (
           <button
             key={t.key}
-            onClick={() => setTheme(t.key)}
+            onClick={() => {
+              if (t.key === 'light') {
+                setTheme(theme === 'light' ? 'midnight' : 'light')
+                return
+              }
+              setTheme(t.key)
+            }}
             title={t.label}
             className={cn(
-              'w-5 h-5 rounded-full border-2 transition-all duration-200',
+              'relative w-5 h-5 rounded-full border-2 transition-all duration-200 overflow-hidden',
               theme === t.key
                 ? 'border-foreground/60 scale-110'
                 : 'border-transparent opacity-50 hover:opacity-80 hover:scale-105'
             )}
-            style={{ background: t.bg, boxShadow: `0 0 0 1px ${t.color}40` }}
+            style={{
+              background:
+                t.key === 'light'
+                  ? undefined
+                  : t.bg,
+              boxShadow: `0 0 0 1px ${t.color}40`,
+            }}
+            data-split-theme={t.key === 'light' ? 'true' : undefined}
           />
         ))}
       </div>
